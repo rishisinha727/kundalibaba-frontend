@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kundalibaba — AI-Powered Vedic Astrology</title>
+  <style>
+    @font-face {
+      font-family: 'Playfair Display';
+      src: url('KundaliBaba_extracted/fonts/PlayfairDisplay-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Playfair Display';
+      src: url('KundaliBaba_extracted/fonts/PlayfairDisplay-Medium.ttf') format('truetype');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Playfair Display';
+      src: url('KundaliBaba_extracted/fonts/PlayfairDisplay-SemiBold.ttf') format('truetype');
+      font-weight: 600;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Playfair Display';
+      src: url('KundaliBaba_extracted/fonts/PlayfairDisplay-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Playfair Display';
+      src: url('KundaliBaba_extracted/fonts/PlayfairDisplay-ExtraBold.ttf') format('truetype');
+      font-weight: 800;
+      font-style: normal;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #FFF9F0;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- API layer (plain JS, no Babel needed) -->
+  <script src="KundaliBaba_extracted/api.js"></script>
+
+  <!-- Design system: tweaks panel, shared components, pages -->
+  <script type="text/babel" src="KundaliBaba_extracted/tweaks-panel.jsx"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/Components.jsx"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/AuthModal.jsx"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/LandingPage.jsx"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/HomePage.jsx"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/ChatPage.jsx"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/KundaliPage.jsx"></script>
+
+  <!-- App shell -->
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "heroSize": 54,
+      "darkNav": false
+    }/*EDITMODE-END*/;
+
+    function ShopPage({ onNavigate }) {
+      const gems = [
+        { name:'Yellow Sapphire (Pukhraj)', planet:'Jupiter ♃', price:'₹4,999', icon:'💛', benefit:'Enhances wisdom, wealth & career growth.' },
+        { name:'Blue Sapphire (Neelam)', planet:'Saturn ♄', price:'₹8,999', icon:'💙', benefit:'Brings discipline, success & removes obstacles.' },
+        { name:'Ruby (Manik)', planet:'Sun ☉', price:'₹6,499', icon:'❤️', benefit:'Boosts confidence, authority & vitality.' },
+        { name:'Emerald (Panna)', planet:'Mercury ☿', price:'₹5,499', icon:'💚', benefit:'Sharpens intellect, communication & business.' },
+        { name:'Red Coral (Moonga)', planet:'Mars ♂', price:'₹3,499', icon:'🔴', benefit:'Energizes drive, courage & health.' },
+        { name:'Pearl (Moti)', planet:'Moon ☽', price:'₹2,999', icon:'⚪', benefit:'Calms mind, improves relationships & intuition.' },
+      ];
+      return (
+        <div style={{ background:'#FFF9F0', minHeight:'calc(100vh - 64px)' }}>
+          <div style={{ background:'linear-gradient(135deg,#060D20 0%,#0D1B3E 60%,#152855 100%)', padding:'56px 32px' }}>
+            <div style={{ maxWidth:1280, margin:'0 auto' }}>
+              <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#F5C842', marginBottom:12 }}>✦ Certified & Energized</div>
+              <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:44, fontWeight:700, color:'white', margin:'0 0 10px', lineHeight:1.1 }}>Ratna &amp; Gemstone Shop</h1>
+              <p style={{ fontSize:15, color:'rgba(253,246,236,0.6)', margin:0 }}>GIA/IGI certified gemstones, energized by pandits during auspicious muhurat.</p>
+            </div>
+          </div>
+          <div style={{ maxWidth:1280, margin:'0 auto', padding:'56px 32px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:24, marginBottom:48 }}>
+              {gems.map(g => (
+                <div key={g.name} style={{ background:'white', borderRadius:16, padding:28, border:'1px solid #EDD9B8', boxShadow:'0 2px 8px rgba(13,27,62,0.06)', cursor:'pointer', transition:'all 200ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 10px 30px rgba(13,27,62,0.13)'; e.currentTarget.style.borderColor='#E8890C'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 8px rgba(13,27,62,0.06)'; e.currentTarget.style.borderColor='#EDD9B8'; }}
+                >
+                  <div style={{ fontSize:40, marginBottom:14 }}>{g.icon}</div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#1A0A00', marginBottom:4 }}>{g.name}</div>
+                  <div style={{ fontSize:12, color:'#E8890C', fontWeight:600, marginBottom:10 }}>{g.planet}</div>
+                  <div style={{ fontSize:13, color:'#6B4C2A', lineHeight:1.65, marginBottom:18 }}>{g.benefit}</div>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span style={{ fontSize:18, fontWeight:800, color:'#1A0A00' }}>{g.price}</span>
+                    <KBButton variant="primary" size="sm">Add to Cart</KBButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ background:'linear-gradient(135deg,#0D1B3E,#152855)', borderRadius:16, padding:'32px 40px', border:'1px solid rgba(245,200,66,0.2)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:24, flexWrap:'wrap' }}>
+              <div>
+                <div style={{ fontSize:16, fontWeight:700, color:'white', marginBottom:6 }}>Not sure which gemstone to wear?</div>
+                <div style={{ fontSize:13, color:'rgba(253,246,236,0.55)' }}>Consult a pandit who will analyse your kundali and recommend the right ratna.</div>
+              </div>
+              <KBButton variant="gold" onClick={() => onNavigate('chat')}>💬 Ask a Pandit</KBButton>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [page, setPage] = React.useState('home');
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const [user, setUser] = React.useState(Auth.getUser());
+      const [showAuth, setShowAuth] = React.useState(false);
+
+      const onNavigate = (pg) => {
+        setPage(pg);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const handleLogout = async () => {
+        try { await KBApi.logout(Auth.getRefresh()); } catch {}
+        Auth.clear();
+        setUser(null);
+      };
+
+      const isKundali = page === 'kundali' || page === 'matching';
+      const hideFooter = page === 'chat';
+
+      return (
+        <div>
+          <KBNav currentPage={page} onNavigate={onNavigate} tweaks={t} user={user} onSignIn={() => setShowAuth(true)} onLogout={handleLogout} />
+
+          {page === 'home'     && <LandingPage onNavigate={onNavigate} />}
+          {isKundali           && <KundaliPage onNavigate={onNavigate} tweaks={t} initialSubPage={page} key={page} onShowAuth={() => setShowAuth(true)} />}
+          {page === 'chat'     && <ChatPage    onNavigate={onNavigate} tweaks={t} user={user} onShowAuth={() => setShowAuth(true)} />}
+          {page === 'shop'     && <ShopPage    onNavigate={onNavigate} />}
+
+          {!hideFooter && <KBFooter onNavigate={onNavigate} />}
+
+          {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={u => setUser(u)} />}
+
+          <TweaksPanel title="Kundalibaba Tweaks">
+            <TweakSection label="Hero" />
+            <TweakSlider label="Hero font size" value={t.heroSize} min={36} max={72} unit="px"
+                         onChange={(v) => setTweak('heroSize', v)} />
+            <TweakSection label="Nav" />
+            <TweakToggle label="Dark nav always" value={t.darkNav}
+                         onChange={(v) => setTweak('darkNav', v)} />
+          </TweaksPanel>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  
+  <symbol id="zodiac-aries" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#8B1A1A" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♈</text>
+  </symbol>
+  
+  <symbol id="zodiac-taurus" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#2E7D32" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♉</text>
+  </symbol>
+  
+  <symbol id="zodiac-gemini" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#F5C842" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♊</text>
+  </symbol>
+  
+  <symbol id="zodiac-cancer" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#1565C0" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♋</text>
+  </symbol>
+  
+  <symbol id="zodiac-leo" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#E8890C" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♌</text>
+  </symbol>
+  
+  <symbol id="zodiac-virgo" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#2E7D32" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♍</text>
+  </symbol>
+  
+  <symbol id="zodiac-libra" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#1565C0" opacity="0.12"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♎</text>
+  </symbol>
+  
+  <symbol id="zodiac-scorpio" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#8B1A1A" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♏</text>
+  </symbol>
+  
+  <symbol id="zodiac-sagittarius" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#F57F17" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♐</text>
+  </symbol>
+  
+  <symbol id="zodiac-capricorn" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#4A148C" opacity="0.12"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♑</text>
+  </symbol>
+  
+  <symbol id="zodiac-aquarius" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#0277BD" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♒</text>
+  </symbol>
+  
+  <symbol id="zodiac-pisces" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#1565C0" opacity="0.15"></circle>
+    <text x="24" y="32" text-anchor="middle" font-size="24" fill="#E8890C" font-family="serif">♓</text>
+  </symbol>
+</svg>

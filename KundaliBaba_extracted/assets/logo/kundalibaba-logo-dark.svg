@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" fill="none">
+  <g transform="translate(4,4)">
+    <circle cx="32" cy="32" r="30" stroke="#F5C842" stroke-width="2" fill="none" opacity="0.3"></circle>
+    <polygon points="32,6 35.5,24 50,16 40,29 56,32 40,35 50,48 35.5,40 32,58 28.5,40 14,48 24,35 8,32 24,29 14,16 28.5,24" fill="#E8890C" opacity="0.95"></polygon>
+    <circle cx="32" cy="32" r="6" fill="#F5C842"></circle>
+    <circle cx="32" cy="3" r="2" fill="#F5C842"></circle>
+    <circle cx="32" cy="61" r="2" fill="#F5C842"></circle>
+    <circle cx="3" cy="32" r="2" fill="#F5C842"></circle>
+    <circle cx="61" cy="32" r="2" fill="#F5C842"></circle>
+  </g>
+  <text x="80" y="30" font-family="&#39;Yatra One&#39;, Georgia, serif" font-size="26" font-weight="400" fill="#F5C842" letter-spacing="-0.5">Kundali</text>
+  <text x="80" y="58" font-family="&#39;Yatra One&#39;, Georgia, serif" font-size="26" font-weight="400" fill="#FDF6EC" letter-spacing="-0.5">baba</text>
+  <text x="82" y="70" font-family="&#39;DM Sans&#39;, sans-serif" font-size="9" fill="rgba(253,246,236,0.5)" letter-spacing="2">AI-POWERED ASTROLOGY</text>
+</svg>
