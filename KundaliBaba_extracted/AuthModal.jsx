@@ -22,7 +22,6 @@ function AuthModal({ onClose, onSuccess }) {
   // Initialize Google Sign-In button when on main step
   React.useEffect(() => {
     if (step !== 'main') return;
-    if (!window.google) return;
     const interval = setInterval(() => {
       if (googleBtnRef.current && window.google?.accounts?.id) {
         clearInterval(interval);
