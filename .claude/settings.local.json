@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(curl -s -L -I \"https://api.anthropic.com/v1/design/h/bOH_Dr4ATnqGGMSW_y7AGw\")",
+      "Bash(curl -s -L -X POST \"https://api.anthropic.com/v1/design/h/bOH_Dr4ATnqGGMSW_y7AGw\" -H \"Content-Type: application/json\")",
+      "Bash(curl -s -L \"https://api.anthropic.com/v1/design/h/bOH_Dr4ATnqGGMSW_y7AGw\" -H \"Content-Type: application/json\")",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(env)",
+      "Bash(unzip -o KundaliBaba.zip -d KundaliBaba_extracted)",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//usr/local/**)",
+      "Read(//Users/aman/.nvm/versions/**)",
+      "Bash(ruby --version)",
+      "Bash(rm -rf /tmp/kundalibaba_preview)",
+      "Bash(cp -r /Users/aman/Desktop/Kundalibaba /tmp/kundalibaba_preview)",
+      "Bash(npx prisma *)",
+      "Bash(/usr/local/bin/npx prisma *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://kundalibaba-backend-production.up.railway.app/health)",
+      "Bash(curl -s https://kundalibaba-backend-production.up.railway.app/health)"
+    ]
+  }
+}

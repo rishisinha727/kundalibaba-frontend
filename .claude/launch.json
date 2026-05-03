@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kundalibaba2",
+      "runtimeExecutable": "/usr/bin/ruby",
+      "runtimeArgs": ["-run", "-e", "httpd", "/tmp/kundalibaba_preview", "--port=3457"],
+      "port": 3457
+    }
+  ]
+}

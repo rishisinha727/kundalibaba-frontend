@@ -26,6 +26,7 @@ async function apiFetch(path, options = {}) {
 
 const KBApi = {
   // Auth
+  googleLogin: (idToken) => apiFetch('/auth/google', { method: 'POST', body: JSON.stringify({ idToken }) }),
   sendOtp: (phone) => apiFetch('/auth/send-otp', { method: 'POST', body: JSON.stringify({ phone }) }),
   verifyOtp: (phone, otp) => apiFetch('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ phone, otp }) }),
   getMe: () => apiFetch('/auth/me'),
