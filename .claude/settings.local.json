@@ -38,7 +38,9 @@
       "Bash(curl -s \"https://raw.githubusercontent.com/rishisinha727/kundalibaba-frontend/main/index.html\")",
       "Bash(curl -sI \"https://kundalibaba.com/index.html\")",
       "Bash(curl -s \"https://rishisinha727.github.io/kundalibaba-frontend/index.html\")",
-      "Bash(curl -sI \"https://rishisinha727.github.io/kundalibaba-frontend/index.html\")"
+      "Bash(curl -sI \"https://rishisinha727.github.io/kundalibaba-frontend/index.html\")",
+      "Bash(curl -s -H \"Cache-Control: no-cache\" -H \"Pragma: no-cache\" \"https://kundalibaba.com/index.html\")",
+      "Bash(curl -s -H \"Cache-Control: no-cache\" \"https://kundalibaba.com/index.html\")"
     ]
   }
 }
