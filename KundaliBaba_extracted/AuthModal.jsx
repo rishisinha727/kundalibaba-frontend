@@ -7,10 +7,11 @@ const GOOGLE_CLIENT_ID = '112774249048-rfnms6tnvqi4d6gcaureisbqfd2jb7de.apps.goo
 function AuthModal({ onClose, onSuccess }) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
-  const [googleReady, setGoogleReady] = React.useState(false);
+  const [status, setStatus] = React.useState('loading'); // 'loading' | 'ready' | 'error'
+  const containerRef = React.useRef(null);
 
   React.useEffect(() => {
-    // Expose callback globally so Google GSI can call it
+    // Store callback globally to avoid stale closure
     window.__kbGoogleCallback = async (response) => {
       setLoading(true);
       setError('');
@@ -27,75 +28,77 @@ function AuthModal({ onClose, onSuccess }) {
       }
     };
 
-    const interval = setInterval(() => {
-      if (window.google?.accounts?.id) {
-        clearInterval(interval);
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: window.__kbGoogleCallback,
-        });
-        setGoogleReady(true);
+    let attempts = 0;
+    const tryRender = () => {
+      attempts++;
+      if (containerRef.current && window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: window.__kbGoogleCallback,
+          });
+          window.google.accounts.id.renderButton(containerRef.current, {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            width: 328,
+          });
+          setStatus('ready');
+        } catch (e) {
+          setStatus('error');
+          setError('Google Sign-In failed to load. Please refresh the page.');
+        }
+      } else if (attempts < 40) {
+        setTimeout(tryRender, 250);
+      } else {
+        setStatus('error');
+        setError('Google Sign-In could not be loaded. Please refresh the page.');
       }
-    }, 200);
+    };
 
+    // Wait 400ms for modal to fully render before trying
+    const t = setTimeout(tryRender, 400);
     return () => {
-      clearInterval(interval);
+      clearTimeout(t);
       delete window.__kbGoogleCallback;
     };
   }, []);
 
-  const handleGoogleClick = () => {
-    if (!googleReady) { setError('Google is still loading, please wait a moment'); return; }
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed()) {
-        setError('Google sign-in could not be shown. Please allow pop-ups for this site.');
-      }
-    });
-  };
-
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,13,32,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(6,13,32,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div style={{ background: 'white', borderRadius: 20, padding: 36, width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(13,27,62,0.2)', position: 'relative' }}>
         <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 18, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#A07850', lineHeight: 1 }}>×</button>
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🔮</div>
           <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: '#0D1B3E', margin: '0 0 6px' }}>Login to KundaliBaba</h2>
-          <p style={{ fontSize: 13, color: '#A07850', margin: 0 }}>Sign in to get your Kundali & more</p>
+          <p style={{ fontSize: 13, color: '#A07850', margin: 0 }}>Sign in to get your Kundali and more</p>
         </div>
 
-        {error && (
-          <div style={{ fontSize: 13, color: '#C62828', background: 'rgba(198,40,40,0.07)', padding: '8px 12px', borderRadius: 8, marginBottom: 16, textAlign: 'center' }}>{error}</div>
+        {loading && (
+          <div style={{ textAlign: 'center', fontSize: 14, color: '#A07850', marginBottom: 16 }}>Signing in...</div>
         )}
 
-        {/* Custom Google Sign-In button */}
-        <button
-          onClick={handleGoogleClick}
-          disabled={loading}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-            padding: '12px 24px', border: '1.5px solid #dadce0', borderRadius: 8,
-            background: 'white', cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: 15, fontWeight: 600, color: '#3c4043', fontFamily: 'inherit',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)', transition: 'box-shadow 150ms',
-            opacity: loading ? 0.7 : 1,
-          }}
-          onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'; }}
-          onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'; }}
-        >
-          {/* Google G logo SVG */}
-          <svg width="20" height="20" viewBox="0 0 48 48">
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-            <path fill="none" d="M0 0h48v48H0z"/>
-          </svg>
-          {loading ? 'Signing in…' : 'Sign in with Google'}
-        </button>
+        {error && (
+          <div style={{ fontSize: 13, color: '#C62828', background: 'rgba(198,40,40,0.07)', padding: '10px 14px', borderRadius: 8, marginBottom: 16, textAlign: 'center' }}>{error}</div>
+        )}
 
-        <div style={{ textAlign: 'center', fontSize: 12, color: '#A07850', marginTop: 20 }}>
+        {/* Google Sign-In button container — fixed 328px width */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          <div ref={containerRef} style={{ width: 328, minHeight: 44 }}>
+            {status === 'loading' && (
+              <div style={{ width: 328, height: 44, border: '1px solid #dadce0', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#A07850', gap: 8 }}>
+                <span>⟳</span> Loading Google Sign-In...
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'center', fontSize: 12, color: '#A07850', marginTop: 8 }}>
           By continuing, you agree to our Terms &amp; Privacy Policy
         </div>
       </div>
