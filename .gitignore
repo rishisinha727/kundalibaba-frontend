@@ -1,0 +1,5 @@
+# Local Netlify folder
+.netlify
+
+# Backend lives in its own repo (github.com/rishisinha727/kundalibaba-backend)
+backend/
