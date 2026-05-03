@@ -1,91 +1,56 @@
 // ============================================================
-// KundaliBaba — Auth Modal (Google + Phone OTP Login)
+// KundaliBaba — Auth Modal (Google Login)
 // ============================================================
 
 const GOOGLE_CLIENT_ID = '112774249048-rfnms6tnvqi4d6gcaureisbqfd2jb7de.apps.googleusercontent.com';
 
 function AuthModal({ onClose, onSuccess }) {
-  const [step, setStep] = React.useState('main'); // 'main' | 'phone' | 'otp'
-  const [phone, setPhone] = React.useState('');
-  const [otp, setOtp] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
-  const [devOtp, setDevOtp] = React.useState(null);
-  const googleBtnRef = React.useRef(null);
+  const [googleReady, setGoogleReady] = React.useState(false);
 
-  const inputSt = {
-    height: 48, padding: '0 16px', border: '1.5px solid #EDD9B8', borderRadius: 10,
-    background: 'white', fontFamily: 'inherit', fontSize: 16, color: '#1A0A00',
-    outline: 'none', width: '100%', boxSizing: 'border-box', transition: 'border-color 150ms',
-  };
-
-  // Initialize Google Sign-In button when on main step
   React.useEffect(() => {
-    if (step !== 'main') return;
+    // Expose callback globally so Google GSI can call it
+    window.__kbGoogleCallback = async (response) => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await KBApi.googleLogin(response.credential);
+        Auth.setToken(res.data.accessToken);
+        Auth.setRefresh(res.data.refreshToken);
+        Auth.setUser(res.data.user);
+        onSuccess(res.data.user);
+        onClose();
+      } catch (e) {
+        setError(e.message);
+        setLoading(false);
+      }
+    };
+
     const interval = setInterval(() => {
-      if (googleBtnRef.current && window.google?.accounts?.id) {
+      if (window.google?.accounts?.id) {
         clearInterval(interval);
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleCredential,
+          callback: window.__kbGoogleCallback,
         });
-        window.google.accounts.id.renderButton(googleBtnRef.current, {
-          theme: 'outline',
-          size: 'large',
-          width: 328,
-          text: 'signin_with',
-          shape: 'rectangular',
-        });
+        setGoogleReady(true);
       }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [step]);
+    }, 200);
 
-  const handleGoogleCredential = async (response) => {
-    setLoading(true); setError('');
-    try {
-      const res = await KBApi.googleLogin(response.credential);
-      Auth.setToken(res.data.accessToken);
-      Auth.setRefresh(res.data.refreshToken);
-      Auth.setUser(res.data.user);
-      onSuccess(res.data.user);
-      onClose();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      clearInterval(interval);
+      delete window.__kbGoogleCallback;
+    };
+  }, []);
 
-  const sendOtp = async () => {
-    if (phone.replace(/\D/g, '').length < 10) { setError('Enter a valid 10-digit mobile number'); return; }
-    setLoading(true); setError('');
-    try {
-      const res = await KBApi.sendOtp(phone.replace(/\D/g, ''));
-      if (res.data?.devOtp) setDevOtp(res.data.devOtp);
-      setStep('otp');
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyOtp = async () => {
-    if (otp.length < 4) { setError('Enter the OTP'); return; }
-    setLoading(true); setError('');
-    try {
-      const res = await KBApi.verifyOtp(phone.replace(/\D/g, ''), otp);
-      Auth.setToken(res.data.accessToken);
-      Auth.setRefresh(res.data.refreshToken);
-      Auth.setUser(res.data.user);
-      onSuccess(res.data.user);
-      onClose();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleGoogleClick = () => {
+    if (!googleReady) { setError('Google is still loading, please wait a moment'); return; }
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed()) {
+        setError('Google sign-in could not be shown. Please allow pop-ups for this site.');
+      }
+    });
   };
 
   return (
@@ -94,79 +59,45 @@ function AuthModal({ onClose, onSuccess }) {
       <div style={{ background: 'white', borderRadius: 20, padding: 36, width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(13,27,62,0.2)', position: 'relative' }}>
         <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 18, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#A07850', lineHeight: 1 }}>×</button>
 
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🔮</div>
-          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: '#0D1B3E', margin: '0 0 6px' }}>
-            {step === 'main' ? 'Login to KundaliBaba' : step === 'phone' ? 'Enter Mobile Number' : 'Enter OTP'}
-          </h2>
-          <p style={{ fontSize: 13, color: '#A07850', margin: 0 }}>
-            {step === 'main' ? 'Choose how you want to continue' : step === 'phone' ? 'Enter your mobile number' : `OTP sent to +91 ${phone}`}
-          </p>
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: '#0D1B3E', margin: '0 0 6px' }}>Login to KundaliBaba</h2>
+          <p style={{ fontSize: 13, color: '#A07850', margin: 0 }}>Sign in to get your Kundali & more</p>
         </div>
 
-        {/* ── Main step: Google only ── */}
-        {step === 'main' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
-            {loading && <div style={{ fontSize: 13, color: '#A07850' }}>Signing in with Google…</div>}
-            {error && <div style={{ fontSize: 13, color: '#C62828', background: 'rgba(198,40,40,0.07)', padding: '8px 12px', borderRadius: 8, width: '100%', textAlign: 'center' }}>{error}</div>}
-
-            {/* Google button rendered here */}
-            <div ref={googleBtnRef} style={{ minHeight: 44 }} />
-
-            <div style={{ textAlign: 'center', fontSize: 12, color: '#A07850' }}>By continuing, you agree to our Terms &amp; Privacy Policy</div>
-          </div>
+        {error && (
+          <div style={{ fontSize: 13, color: '#C62828', background: 'rgba(198,40,40,0.07)', padding: '8px 12px', borderRadius: 8, marginBottom: 16, textAlign: 'center' }}>{error}</div>
         )}
 
-        {/* ── Phone step ── */}
-        {step === 'phone' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#6B4C2A', fontWeight: 600 }}>+91</span>
-              <input
-                value={phone} onChange={e => setPhone(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && sendOtp()}
-                placeholder="Mobile number"
-                maxLength={10}
-                style={{ ...inputSt, paddingLeft: 48 }}
-                onFocus={e => e.target.style.borderColor = '#E8890C'}
-                onBlur={e => e.target.style.borderColor = '#EDD9B8'}
-              />
-            </div>
-            {error && <div style={{ fontSize: 13, color: '#C62828', background: 'rgba(198,40,40,0.07)', padding: '8px 12px', borderRadius: 8 }}>{error}</div>}
-            <KBButton variant="primary" size="lg" onClick={sendOtp} disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>
-              {loading ? 'Sending…' : 'Send OTP →'}
-            </KBButton>
-            <button onClick={() => { setStep('main'); setError(''); }} style={{ background: 'none', border: 'none', color: '#E8890C', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
-              ← Back
-            </button>
-          </div>
-        )}
+        {/* Custom Google Sign-In button */}
+        <button
+          onClick={handleGoogleClick}
+          disabled={loading}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            padding: '12px 24px', border: '1.5px solid #dadce0', borderRadius: 8,
+            background: 'white', cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: 15, fontWeight: 600, color: '#3c4043', fontFamily: 'inherit',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)', transition: 'box-shadow 150ms',
+            opacity: loading ? 0.7 : 1,
+          }}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'; }}
+          onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'; }}
+        >
+          {/* Google G logo SVG */}
+          <svg width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            <path fill="none" d="M0 0h48v48H0z"/>
+          </svg>
+          {loading ? 'Signing in…' : 'Sign in with Google'}
+        </button>
 
-        {/* ── OTP step ── */}
-        {step === 'otp' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {devOtp && (
-              <div style={{ background: 'rgba(46,125,50,0.08)', border: '1px solid rgba(46,125,50,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#2E7D32', fontWeight: 600 }}>
-                📱 SMS not configured — your OTP is: <strong style={{ fontSize: 18, letterSpacing: 4 }}>{devOtp}</strong>
-              </div>
-            )}
-            <input
-              value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              onKeyDown={e => e.key === 'Enter' && verifyOtp()}
-              placeholder="Enter 6-digit OTP"
-              style={{ ...inputSt, textAlign: 'center', letterSpacing: 8, fontSize: 22, fontWeight: 700 }}
-              onFocus={e => e.target.style.borderColor = '#E8890C'}
-              onBlur={e => e.target.style.borderColor = '#EDD9B8'}
-            />
-            {error && <div style={{ fontSize: 13, color: '#C62828', background: 'rgba(198,40,40,0.07)', padding: '8px 12px', borderRadius: 8 }}>{error}</div>}
-            <KBButton variant="primary" size="lg" onClick={verifyOtp} disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>
-              {loading ? 'Verifying…' : 'Verify & Login'}
-            </KBButton>
-            <button onClick={() => { setStep('phone'); setOtp(''); setError(''); setDevOtp(null); }} style={{ background: 'none', border: 'none', color: '#E8890C', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
-              ← Change number
-            </button>
-          </div>
-        )}
+        <div style={{ textAlign: 'center', fontSize: 12, color: '#A07850', marginTop: 20 }}>
+          By continuing, you agree to our Terms &amp; Privacy Policy
+        </div>
       </div>
     </div>
   );
