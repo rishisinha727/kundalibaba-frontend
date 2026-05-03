@@ -105,7 +105,7 @@ function AuthModal({ onClose, onSuccess }) {
           </p>
         </div>
 
-        {/* ── Main step: Google + Phone options ── */}
+        {/* ── Main step: Google only ── */}
         {step === 'main' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
             {loading && <div style={{ fontSize: 13, color: '#A07850' }}>Signing in with Google…</div>}
@@ -113,16 +113,6 @@ function AuthModal({ onClose, onSuccess }) {
 
             {/* Google button rendered here */}
             <div ref={googleBtnRef} style={{ minHeight: 44 }} />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-              <div style={{ flex: 1, height: 1, background: '#EDD9B8' }} />
-              <span style={{ fontSize: 12, color: '#A07850', whiteSpace: 'nowrap' }}>or continue with phone</span>
-              <div style={{ flex: 1, height: 1, background: '#EDD9B8' }} />
-            </div>
-
-            <KBButton variant="secondary" size="lg" onClick={() => { setStep('phone'); setError(''); }} style={{ width: '100%', justifyContent: 'center' }}>
-              📱 Phone OTP
-            </KBButton>
 
             <div style={{ textAlign: 'center', fontSize: 12, color: '#A07850' }}>By continuing, you agree to our Terms &amp; Privacy Policy</div>
           </div>

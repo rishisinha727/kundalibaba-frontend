@@ -17,7 +17,12 @@
       "Bash(npx prisma *)",
       "Bash(/usr/local/bin/npx prisma *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://kundalibaba-backend-production.up.railway.app/health)",
-      "Bash(curl -s https://kundalibaba-backend-production.up.railway.app/health)"
+      "Bash(curl -s https://kundalibaba-backend-production.up.railway.app/health)",
+      "Bash(git pull *)",
+      "Bash(git push *)",
+      "Bash(git stash *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
