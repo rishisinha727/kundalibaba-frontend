@@ -122,14 +122,13 @@ function AuthModal({ onClose, onSuccess }) {
         </div>
         {loading && <div style={{ textAlign:'center', fontSize:14, color:'#A07850', marginBottom:16 }}>Signing in...</div>}
         {error && <div style={{ fontSize:13, color:'#C62828', background:'rgba(198,40,40,0.07)', padding:'10px 14px', borderRadius:8, marginBottom:16, textAlign:'center' }}>{error}</div>}
-        <div style={{ display:'flex', justifyContent:'center', marginBottom:16 }}>
-          <div ref={containerRef} style={{ width:328, minHeight:44 }}>
-            {status === 'loading' && (
-              <div style={{ width:328, height:44, border:'1px solid #dadce0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:'#A07850', gap:8 }}>
-                Loading Google Sign-In...
-              </div>
-            )}
-          </div>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:16 }}>
+          {status === 'loading' && (
+            <div style={{ width:328, height:44, border:'1px solid #dadce0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:'#A07850', gap:8 }}>
+              Loading Google Sign-In...
+            </div>
+          )}
+          <div ref={containerRef} style={{ width:328, minHeight: status === 'loading' ? 0 : 44 }} />
         </div>
         <div style={{ textAlign:'center', fontSize:12, color:'#A07850', marginTop:8 }}>By continuing, you agree to our Terms &amp; Privacy Policy</div>
       </div>
