@@ -669,130 +669,298 @@ const PAGE_DEFS = [
 
 const API = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
 
+// ── Shared SEO Fields component ───────────────────────────────
+function SeoFields({ form, setForm }) {
+  const cc = (form.metaDesc||'').length;
+  const tc = (form.metaTitle||'').length;
+  const lbl = (text, extra) => <label style={{ display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}><span>{text}</span>{extra}</label>;
+  const inp = (key, props={}) => <input value={form[key]||''} onChange={e => setForm(f=>({...f,[key]:e.target.value}))} style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none', ...props.style }} {...props} />;
+  const ta = (key, rows=3, props={}) => <textarea value={form[key]||''} onChange={e => setForm(f=>({...f,[key]:e.target.value}))} rows={rows} style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none', resize:'none', ...props.style }} {...props} />;
+
+  return (
+    <>
+      <div style={{ background:'#f0f9ff', border:'1px solid #bae6fd', borderRadius:10, padding:'12px 16px', marginBottom:16, fontSize:12, color:'#0369a1' }}>
+        <strong>SEO Guidelines:</strong> Meta title 50–60 chars · Meta description 150–160 chars · H1 must match main keyword · Canonical = full URL · OG image min 1200×630px
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+        <div>{lbl('Meta Title', <span style={{ color:tc>60?'#ef4444':tc>50?'#f59e0b':'#9ca3af', fontWeight:400 }}>{tc}/60</span>)}{inp('metaTitle',{maxLength:70,placeholder:'55–60 chars · include main keyword'})}</div>
+        <div>{lbl('H1 Tag')}{inp('h1',{placeholder:'Main heading — match primary keyword'})}</div>
+      </div>
+      <div style={{ marginBottom:12 }}>
+        {lbl('Meta Description', <span style={{ color:cc>160?'#ef4444':cc>130?'#f59e0b':'#9ca3af', fontWeight:400 }}>{cc}/160</span>)}
+        {ta('metaDesc',3,{maxLength:170,placeholder:'150–160 chars · compelling & keyword-rich'})}
+      </div>
+      <div style={{ marginBottom:12 }}>
+        {lbl('Canonical URL')}{inp('canonical',{placeholder:'https://kundalibaba.com/page-slug'})}
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+        <div>{lbl('OG Title')}{inp('ogTitle',{placeholder:'For Facebook / WhatsApp / Twitter'})}</div>
+        <div>{lbl('OG Image URL')}{inp('ogImage',{placeholder:'https://... (1200×630px recommended)'})}</div>
+      </div>
+      <div style={{ marginBottom:12 }}>{lbl('OG Description')}{ta('ogDesc',2,{placeholder:'Social media preview description'})}</div>
+      <div style={{ marginBottom:4 }}>
+        {lbl('Footer HTML', <span style={{ color:'#9ca3af', fontWeight:400 }}>injected at page bottom for SEO</span>)}
+        {ta('footerHtml',4,{style:{fontFamily:'monospace',resize:'vertical'},placeholder:'<p>Additional SEO content, schema markup, etc...</p>'})}
+      </div>
+    </>
+  );
+}
+
 function CMS() {
+  const [cmsTab, setCmsTab] = React.useState('pages');
   const [seoData, setSeoData] = React.useState({});
+  const [customPages, setCustomPages] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [modal, setModal] = React.useState(null);
   const [form, setForm] = React.useState({});
+  const [preview, setPreview] = React.useState(false);
   const [toast, setToast] = React.useState('');
+  const [delConfirm, setDelConfirm] = React.useState(null);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
   React.useEffect(() => {
-    fetch(`${API}/cms/pages`)
-      .then(r => r.json())
-      .then(r => { setSeoData(r.data || {}); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch(`${API}/cms/pages`).then(r=>r.json()),
+      fetch(`${API}/cms/custom-pages`, { headers:{ Authorization:`Bearer ${Auth.getToken()}` } }).then(r=>r.json()),
+    ]).then(([p, cp]) => {
+      setSeoData(p.data || {});
+      setCustomPages(cp.data || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
-  const openEdit = (pd) => {
+  const slugify = t => t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+
+  // ── Fixed page SEO ──
+  const openEditSeo = (pd) => {
     const s = seoData[pd.key] || {};
-    setForm({ key:pd.key, name:pd.name, url:pd.url,
+    setForm({ _type:'seo', key:pd.key, name:pd.name, url:pd.url,
       metaTitle:s.metaTitle||'', metaDesc:s.metaDesc||'', h1:s.h1||'',
       canonical:s.canonical||`https://kundalibaba.com${pd.url}`,
       ogTitle:s.ogTitle||'', ogDesc:s.ogDesc||'', ogImage:s.ogImage||'', footerHtml:s.footerHtml||'' });
-    setModal('edit');
+    setModal('editSeo');
   };
-
-  const save = async () => {
+  const saveSeo = async () => {
     setSaving(true);
     try {
       const res = await fetch(`${API}/cms/pages/${form.key}`, {
-        method:'PUT',
-        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${Auth.getToken()}` },
+        method:'PUT', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${Auth.getToken()}` },
         body: JSON.stringify({ metaTitle:form.metaTitle, metaDesc:form.metaDesc, h1:form.h1, canonical:form.canonical, ogTitle:form.ogTitle, ogDesc:form.ogDesc, ogImage:form.ogImage, footerHtml:form.footerHtml }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || 'Save failed');
       setSeoData(d => ({ ...d, [form.key]: json.data }));
-      setModal(null);
-      setToast('SEO settings saved!'); setTimeout(() => setToast(''), 3000);
-    } catch(e) { setToast(`Error: ${e.message}`); setTimeout(() => setToast(''), 4000); }
+      setModal(null); showToast('✅ SEO saved!');
+    } catch(e) { showToast(`❌ ${e.message}`); }
     setSaving(false);
   };
 
-  const cc = (form.metaDesc||'').length;
-  const tc = (form.metaTitle||'').length;
+  // ── Custom pages ──
+  const emptyPage = { _type:'custom', slug:'', title:'', htmlContent:'', isPublished:false, metaTitle:'', metaDesc:'', h1:'', canonical:'', ogTitle:'', ogDesc:'', ogImage:'', footerHtml:'' };
+  const openNewPage = () => { setForm(emptyPage); setPreview(false); setModal('customPage'); };
+  const openEditPage = (p) => { setForm({ _type:'custom', ...p, slug:p.slug }); setPreview(false); setModal('customPage'); };
+
+  const saveCustomPage = async () => {
+    setSaving(true);
+    try {
+      const isNew = !form.id;
+      const url = isNew ? `${API}/cms/custom-pages` : `${API}/cms/custom-pages/${form.slug}`;
+      const res = await fetch(url, {
+        method: isNew ? 'POST' : 'PUT',
+        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${Auth.getToken()}` },
+        body: JSON.stringify(form),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Save failed');
+      if (isNew) setCustomPages(p => [json.data, ...p]);
+      else setCustomPages(p => p.map(x => x.slug === form.slug ? json.data : x));
+      setModal(null); showToast('✅ Page saved!');
+    } catch(e) { showToast(`❌ ${e.message}`); }
+    setSaving(false);
+  };
+
+  const deleteCustomPage = async (slug) => {
+    try {
+      await fetch(`${API}/cms/custom-pages/${slug}`, { method:'DELETE', headers:{ Authorization:`Bearer ${Auth.getToken()}` } });
+      setCustomPages(p => p.filter(x => x.slug !== slug));
+      setDelConfirm(null); showToast('✅ Page deleted');
+    } catch(e) { showToast(`❌ ${e.message}`); }
+  };
+
+  const tabSt = active => ({ padding:'9px 20px', border:'none', borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background: active ? C.saffron : 'transparent', color: active ? 'white' : '#6b7280', transition:'all 150ms' });
 
   return (
     <div style={{ animation:'fadeIn 200ms ease' }}>
-      <PageHeader title="CMS / SEO" sub="Manage page metadata, SEO tags and footer content" />
-      {toast && <div style={{ position:'fixed', top:24, right:24, zIndex:999, background: toast.startsWith('Error') ? '#fef2f2':'#f0fdf4', border:`1px solid ${toast.startsWith('Error')?'#fecaca':'#bbf7d0'}`, color:toast.startsWith('Error')?'#dc2626':'#15803d', padding:'12px 20px', borderRadius:10, fontSize:13, fontWeight:600, boxShadow:'0 4px 12px rgba(0,0,0,0.1)' }}>{toast}</div>}
-      {loading ? <div style={{ textAlign:'center', padding:48, color:'#9ca3af' }}>Loading SEO data...</div> : (
-        <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
-          <table>
-            <THead cols={['Page','URL','Meta Title','Meta Description','Actions']} />
-            <tbody>
-              {PAGE_DEFS.map(pd => {
-                const s = seoData[pd.key] || {};
-                return (
-                  <tr key={pd.key}>
-                    <TD style={{ fontWeight:700 }}>{pd.name}</TD>
-                    <TD><span style={{ fontFamily:'monospace', fontSize:12, color:C.saffron }}>{pd.url}</span></TD>
-                    <TD><span style={{ fontSize:12, color: s.metaTitle ? '#374151':'#d1d5db' }}>{s.metaTitle || '— not set —'}</span></TD>
-                    <TD style={{ maxWidth:260 }}><span style={{ fontSize:12, color: s.metaDesc ? '#374151':'#d1d5db' }}>{s.metaDesc ? s.metaDesc.slice(0,55)+'…' : '— not set —'}</span></TD>
-                    <TD><Btn variant="secondary" size="sm" onClick={() => openEdit(pd)}>✏ Edit SEO</Btn></TD>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {modal === 'edit' && (
-        <Modal title={`SEO — ${form.name}`} onClose={() => setModal(null)} width={700}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-            <div>
-              <label style={{ display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>
-                <span>Meta Title</span><span style={{ color:tc>60?'#ef4444':tc>50?'#f59e0b':'#9ca3af', fontWeight:400 }}>{tc}/60</span>
-              </label>
-              <input value={form.metaTitle} onChange={e => setForm(f => ({ ...f, metaTitle:e.target.value }))} maxLength={70}
-                placeholder="55–60 chars recommended" style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none' }} />
-            </div>
-            <div>
-              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>H1 Tag</label>
-              <input value={form.h1} onChange={e => setForm(f => ({ ...f, h1:e.target.value }))}
-                placeholder="Main heading for this page" style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none' }} />
-            </div>
+      <PageHeader title="CMS / SEO" sub="Manage page metadata, SEO tags and custom pages"
+        action={cmsTab === 'custom' ? <Btn onClick={openNewPage}>+ New Page</Btn> : null} />
+
+      {toast && <div style={{ position:'fixed', top:24, right:24, zIndex:999, background:toast.startsWith('✅')?'#f0fdf4':'#fef2f2', border:`1px solid ${toast.startsWith('✅')?'#bbf7d0':'#fecaca'}`, color:toast.startsWith('✅')?'#15803d':'#dc2626', padding:'12px 20px', borderRadius:10, fontSize:13, fontWeight:600, boxShadow:'0 4px 12px rgba(0,0,0,0.1)' }}>{toast}</div>}
+
+      <div style={{ display:'flex', gap:4, background:'white', padding:4, borderRadius:10, width:'fit-content', border:'1px solid #e5e7eb', marginBottom:20 }}>
+        {[['pages','Page SEO'],['custom','Custom Pages']].map(([id,label]) => (
+          <button key={id} onClick={() => setCmsTab(id)} style={tabSt(cmsTab===id)}>{label}</button>
+        ))}
+      </div>
+
+      {loading ? <div style={{ textAlign:'center', padding:48, color:'#9ca3af' }}>Loading...</div> : (<>
+
+        {/* ── Fixed page SEO tab ── */}
+        {cmsTab === 'pages' && (
+          <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+            <table>
+              <THead cols={['Page','URL','Meta Title','Meta Description','Actions']} />
+              <tbody>
+                {PAGE_DEFS.map(pd => {
+                  const s = seoData[pd.key] || {};
+                  return (
+                    <tr key={pd.key}>
+                      <TD style={{ fontWeight:700 }}>{pd.name}</TD>
+                      <TD><span style={{ fontFamily:'monospace', fontSize:12, color:C.saffron }}>{pd.url}</span></TD>
+                      <TD><span style={{ fontSize:12, color:s.metaTitle?'#374151':'#d1d5db' }}>{s.metaTitle||'— not set —'}</span></TD>
+                      <TD style={{ maxWidth:260 }}><span style={{ fontSize:12, color:s.metaDesc?'#374151':'#d1d5db' }}>{s.metaDesc?s.metaDesc.slice(0,55)+'…':'— not set —'}</span></TD>
+                      <TD><Btn variant="secondary" size="sm" onClick={() => openEditSeo(pd)}>✏ Edit SEO</Btn></TD>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          <div style={{ marginBottom:12 }}>
-            <label style={{ display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>
-              <span>Meta Description</span><span style={{ color:cc>160?'#ef4444':cc>130?'#f59e0b':'#9ca3af', fontWeight:400 }}>{cc}/160</span>
-            </label>
-            <textarea value={form.metaDesc} onChange={e => setForm(f => ({ ...f, metaDesc:e.target.value }))} maxLength={170} rows={3}
-              placeholder="150–160 chars recommended" style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none', resize:'none' }} />
+        )}
+
+        {/* ── Custom pages tab ── */}
+        {cmsTab === 'custom' && (
+          <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+            {customPages.length === 0 ? (
+              <div style={{ textAlign:'center', padding:48 }}>
+                <div style={{ fontSize:32, marginBottom:12 }}>📄</div>
+                <div style={{ fontSize:14, fontWeight:600, color:'#374151', marginBottom:6 }}>No custom pages yet</div>
+                <div style={{ fontSize:12, color:'#9ca3af', marginBottom:20 }}>Create pages like /about-us, /privacy-policy, /vastu-tips etc.</div>
+                <Btn onClick={openNewPage}>+ Create First Page</Btn>
+              </div>
+            ) : (
+              <table>
+                <THead cols={['Title','Slug / URL','Status','Meta Title','Actions']} />
+                <tbody>
+                  {customPages.map(p => (
+                    <tr key={p.slug}>
+                      <TD style={{ fontWeight:700 }}>{p.title}</TD>
+                      <TD><span style={{ fontFamily:'monospace', fontSize:12, color:C.saffron }}>/{p.slug}</span></TD>
+                      <TD>{p.isPublished ? <Badge label="Published" color="green" /> : <Badge label="Draft" color="gray" />}</TD>
+                      <TD><span style={{ fontSize:12, color:p.metaTitle?'#374151':'#d1d5db' }}>{p.metaTitle||'— not set —'}</span></TD>
+                      <TD><div style={{ display:'flex', gap:6 }}>
+                        <Btn variant="secondary" size="sm" onClick={() => openEditPage(p)}>✏ Edit</Btn>
+                        <Btn variant="danger" size="sm" onClick={() => setDelConfirm(p.slug)}>Delete</Btn>
+                      </div></TD>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-          <div style={{ marginBottom:12 }}>
-            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Canonical URL</label>
-            <input value={form.canonical} onChange={e => setForm(f => ({ ...f, canonical:e.target.value }))}
-              style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none' }} />
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-            <div>
-              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>OG Title</label>
-              <input value={form.ogTitle} onChange={e => setForm(f => ({ ...f, ogTitle:e.target.value }))}
-                placeholder="For Facebook / WhatsApp" style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none' }} />
-            </div>
-            <div>
-              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>OG Image URL</label>
-              <input value={form.ogImage} onChange={e => setForm(f => ({ ...f, ogImage:e.target.value }))}
-                placeholder="https://..." style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none' }} />
-            </div>
-          </div>
-          <div style={{ marginBottom:12 }}>
-            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>OG Description</label>
-            <textarea value={form.ogDesc} onChange={e => setForm(f => ({ ...f, ogDesc:e.target.value }))} rows={2}
-              placeholder="Description for social media previews" style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none', resize:'none' }} />
-          </div>
-          <div style={{ marginBottom:16 }}>
-            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Footer HTML <span style={{ color:'#9ca3af', fontWeight:400 }}>(injected at bottom of page)</span></label>
-            <textarea value={form.footerHtml} onChange={e => setForm(f => ({ ...f, footerHtml:e.target.value }))} rows={4}
-              placeholder="<p>Additional SEO content...</p>" style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, fontFamily:'monospace', outline:'none', resize:'vertical' }} />
-          </div>
+        )}
+      </>)}
+
+      {/* ── Delete confirm ── */}
+      {delConfirm && (
+        <Modal title="Delete Page?" onClose={() => setDelConfirm(null)} width={400}>
+          <p style={{ fontSize:14, color:'#374151', marginBottom:20 }}>Are you sure you want to delete <strong>/{delConfirm}</strong>? This cannot be undone.</p>
           <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
-            <Btn variant="secondary" onClick={() => setModal(null)}>Cancel</Btn>
-            <Btn onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save SEO'}</Btn>
+            <Btn variant="secondary" onClick={() => setDelConfirm(null)}>Cancel</Btn>
+            <Btn variant="danger" onClick={() => deleteCustomPage(delConfirm)}>Yes, Delete</Btn>
           </div>
         </Modal>
+      )}
+
+      {/* ── Edit fixed page SEO modal ── */}
+      {modal === 'editSeo' && (
+        <Modal title={`SEO — ${form.name}`} onClose={() => setModal(null)} width={700}>
+          <SeoFields form={form} setForm={setForm} />
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:8 }}>
+            <Btn variant="secondary" onClick={() => setModal(null)}>Cancel</Btn>
+            <Btn onClick={saveSeo} disabled={saving}>{saving?'Saving...':'💾 Save SEO'}</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Custom page editor modal ── */}
+      {modal === 'customPage' && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:200, overflowY:'auto', padding:'24px 16px' }}>
+          <div style={{ background:'white', borderRadius:16, maxWidth:1000, margin:'0 auto', boxShadow:'0 24px 64px rgba(0,0,0,0.2)', overflow:'hidden' }}>
+
+            {/* Header */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'18px 28px', borderBottom:'1px solid #f0f0f0', background:'#fafafa' }}>
+              <div style={{ fontSize:17, fontWeight:700, color:'#111827' }}>{form.id ? '✏️ Edit Page' : '📄 New Custom Page'}</div>
+              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  <input type="checkbox" checked={form.isPublished} onChange={e => setForm(f=>({...f,isPublished:e.target.checked}))} />
+                  Publish
+                </label>
+                <button onClick={() => setPreview(p=>!p)} style={{ padding:'7px 16px', borderRadius:8, border:'1.5px solid #e5e7eb', background:preview?'#f0f4ff':'white', color:preview?'#3b5bdb':'#374151', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  {preview ? '✏️ Edit' : '👁 Preview'}
+                </button>
+                <button onClick={() => setModal(null)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'#9ca3af' }}>×</button>
+              </div>
+            </div>
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', minHeight:600 }}>
+              {/* Left: content */}
+              <div style={{ padding:'24px 28px', borderRight:'1px solid #f0f0f0', overflowY:'auto' }}>
+                {preview ? (
+                  <div>
+                    <h1 style={{ fontSize:28, fontWeight:800, color:'#111827', marginBottom:16 }}>{form.h1 || form.title || 'Untitled'}</h1>
+                    <div style={{ fontSize:14, lineHeight:1.8, color:'#374151' }} dangerouslySetInnerHTML={{ __html: form.htmlContent || '<p style="color:#9ca3af">No content yet...</p>' }} />
+                    {form.footerHtml && <div style={{ marginTop:32, paddingTop:16, borderTop:'1px solid #e5e7eb' }} dangerouslySetInnerHTML={{ __html: form.footerHtml }} />}
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom:16 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Page Title *</label>
+                      <input value={form.title} onChange={e => { const t=e.target.value; setForm(f=>({...f,title:t,slug:f.slug||slugify(t),h1:f.h1||t,metaTitle:f.metaTitle||t})); }}
+                        placeholder="e.g. About Us, Privacy Policy, Vastu Tips..."
+                        style={{ width:'100%', padding:'10px 14px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:15, fontWeight:600, outline:'none' }} />
+                    </div>
+                    <div style={{ marginBottom:20 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>HTML Body Content</label>
+                      <div style={{ fontSize:11, color:'#9ca3af', marginBottom:6 }}>
+                        Use proper HTML: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;strong&gt;, &lt;a href&gt; — keep headings hierarchical (H2→H3) for SEO
+                      </div>
+                      <textarea value={form.htmlContent} onChange={e => setForm(f=>({...f,htmlContent:e.target.value}))} rows={18}
+                        placeholder={'<h2>Section Heading</h2>\n<p>Your content here...</p>\n<h3>Sub-section</h3>\n<ul>\n  <li>Point one</li>\n  <li>Point two</li>\n</ul>'}
+                        style={{ width:'100%', padding:'12px 14px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, fontFamily:'monospace', outline:'none', resize:'vertical', lineHeight:1.6 }} />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Right: SEO sidebar */}
+              <div style={{ padding:'24px 20px', background:'#fafafa', overflowY:'auto' }}>
+                <div style={{ marginBottom:16 }}>
+                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>
+                    URL Slug * <span style={{ color:'#9ca3af', fontWeight:400 }}>→ kundalibaba.com/<strong>{form.slug||'...'}</strong></span>
+                  </label>
+                  <div style={{ display:'flex', alignItems:'center', border:'1.5px solid #e5e7eb', borderRadius:8, overflow:'hidden', background:'white' }}>
+                    <span style={{ padding:'9px 8px 9px 12px', fontSize:11, color:'#9ca3af', flexShrink:0 }}>kundalibaba.com/</span>
+                    <input value={form.slug} onChange={e => setForm(f=>({...f,slug:slugify(e.target.value)}))}
+                      placeholder="about-us" style={{ flex:1, padding:'9px 12px 9px 0', border:'none', fontSize:13, outline:'none', background:'transparent' }} />
+                  </div>
+                </div>
+
+                <div style={{ height:1, background:'#e5e7eb', margin:'4px 0 16px' }} />
+                <div style={{ fontSize:11, fontWeight:700, color:'#374151', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:12 }}>SEO Settings</div>
+
+                <SeoFields form={form} setForm={setForm} />
+
+                <div style={{ height:1, background:'#e5e7eb', margin:'16px 0' }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <Btn variant="secondary" onClick={() => setModal(null)} style={{ flex:1 }}>Cancel</Btn>
+                  <Btn onClick={saveCustomPage} disabled={saving} style={{ flex:1 }}>{saving?'Saving...': form.isPublished ? '🚀 Publish' : '💾 Save Draft'}</Btn>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
