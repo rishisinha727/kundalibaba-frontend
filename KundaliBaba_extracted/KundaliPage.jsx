@@ -74,12 +74,26 @@ function CityAutocomplete({ value, onChange, placeholder, inputStyle, onFocus, o
 }
 
 function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
-  const [subPage, setSubPage] = React.useState(initialSubPage || 'kundali'); // 'kundali' | 'matching'
+  const [subPage, setSubPage] = React.useState(initialSubPage || 'kundali');
   const [step, setStep] = React.useState('form');
   const [form, setForm] = React.useState({ name:'', day:'', month:'', year:'', hour:'', min:'', place:'', gender:'Male' });
   const [activeTab, setActiveTab] = React.useState('chart');
   const [loading, setLoading] = React.useState(false);
   const [apiError, setApiError] = React.useState('');
+
+  // Refs for auto-advance — kundali form
+  const dayRef = React.useRef(null);
+  const monthRef = React.useRef(null);
+  const yearRef = React.useRef(null);
+  const hourRef = React.useRef(null);
+  const minRef = React.useRef(null);
+  // Refs for matching form
+  const boyDayRef = React.useRef(null);
+  const boyMonthRef = React.useRef(null);
+  const boyYearRef = React.useRef(null);
+  const girlDayRef = React.useRef(null);
+  const girlMonthRef = React.useRef(null);
+  const girlYearRef = React.useRef(null);
   const [kundaliResult, setKundaliResult] = React.useState(null);
 
   // Matching state
@@ -179,17 +193,22 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
               <div>
                 <label style={labelSt}>Date of Birth</label>
                 <div style={{ display:'flex', gap:10 }}>
-                  {[['day','DD',70],['month','MM',70],['year','YYYY',120]].map(([k,ph,w]) => (
-                    <input key={k} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:w }} placeholder={ph} value={form[k]} onChange={e => update(k, e.target.value)} onFocus={focusIn} onBlur={focusOut} />
-                  ))}
+                  <input ref={dayRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:70 }} placeholder="DD" maxLength={2} value={form.day} onFocus={focusIn} onBlur={focusOut}
+                    onChange={e => { const v = e.target.value.replace(/\D/g,''); update('day', v); if (v.length === 2) monthRef.current?.focus(); }} />
+                  <input ref={monthRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:70 }} placeholder="MM" maxLength={2} value={form.month} onFocus={focusIn} onBlur={focusOut}
+                    onChange={e => { const v = e.target.value.replace(/\D/g,''); update('month', v); if (v.length === 2) yearRef.current?.focus(); }} />
+                  <input ref={yearRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:120 }} placeholder="YYYY" maxLength={4} value={form.year} onFocus={focusIn} onBlur={focusOut}
+                    onChange={e => { const v = e.target.value.replace(/\D/g,''); update('year', v); if (v.length === 4) hourRef.current?.focus(); }} />
                 </div>
               </div>
               <div>
                 <label style={labelSt}>Birth Time <span style={{ fontWeight:400, color:'#A07850' }}>(24-hr)</span></label>
                 <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                  <input style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:80 }} placeholder="HH" value={form.hour} onChange={e => update('hour', e.target.value)} onFocus={focusIn} onBlur={focusOut} />
+                  <input ref={hourRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:80 }} placeholder="HH" maxLength={2} value={form.hour} onFocus={focusIn} onBlur={focusOut}
+                    onChange={e => { const v = e.target.value.replace(/\D/g,''); update('hour', v); if (v.length === 2) minRef.current?.focus(); }} />
                   <span style={{ fontSize:20, color:'#A07850', fontWeight:700, flexShrink:0 }}>:</span>
-                  <input style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:80 }} placeholder="MM" value={form.min} onChange={e => update('min', e.target.value)} onFocus={focusIn} onBlur={focusOut} />
+                  <input ref={minRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:80 }} placeholder="MM" maxLength={2} value={form.min} onFocus={focusIn} onBlur={focusOut}
+                    onChange={e => { const v = e.target.value.replace(/\D/g,''); update('min', v); }} />
                   <span style={{ fontSize:12, color:'#A07850', marginLeft:4 }}>Don't know? We'll use noon</span>
                 </div>
               </div>
@@ -495,7 +514,10 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
       </div>
       <div style={{ maxWidth:900, margin:'0 auto', padding:'48px 32px' }}>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24, marginBottom:28 }}>
-          {[['Boy / Groom', boy, setBoy, '♂', '#152855'], ['Girl / Bride', girl, setGirl, '♀', '#8B1A1A']].map(([title, data, setData, sym, accent]) => (
+          {[
+            { title:'Boy / Groom', data:boy, setData:setBoy, sym:'♂', accent:'#152855', dRef:boyDayRef, mRef:boyMonthRef, yRef:boyYearRef },
+            { title:'Girl / Bride', data:girl, setData:setGirl, sym:'♀', accent:'#8B1A1A', dRef:girlDayRef, mRef:girlMonthRef, yRef:girlYearRef },
+          ].map(({ title, data, setData, sym, accent, dRef, mRef, yRef }) => (
             <div key={title} style={{ background:'white', borderRadius:18, padding:28, border:'1px solid #EDD9B8', boxShadow:'0 4px 16px rgba(13,27,62,0.07)' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:22 }}>
                 <div style={{ width:40, height:40, borderRadius:'50%', background:`${accent}20`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, color:accent }}>{sym}</div>
@@ -509,9 +531,12 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
                 <div>
                   <label style={labelSt}>Date of Birth</label>
                   <div style={{ display:'flex', gap:8 }}>
-                    {[['day','DD',60],['month','MM',60],['year','YYYY',90]].map(([k,ph,w]) => (
-                      <input key={k} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:w }} placeholder={ph} value={data[k]} onChange={e => setData(d => ({ ...d, [k]:e.target.value }))} onFocus={focusIn} onBlur={focusOut} />
-                    ))}
+                    <input ref={dRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:60 }} placeholder="DD" maxLength={2} value={data.day} onFocus={focusIn} onBlur={focusOut}
+                      onChange={e => { const v = e.target.value.replace(/\D/g,''); setData(d => ({ ...d, day:v })); if (v.length === 2) mRef.current?.focus(); }} />
+                    <input ref={mRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:60 }} placeholder="MM" maxLength={2} value={data.month} onFocus={focusIn} onBlur={focusOut}
+                      onChange={e => { const v = e.target.value.replace(/\D/g,''); setData(d => ({ ...d, month:v })); if (v.length === 2) yRef.current?.focus(); }} />
+                    <input ref={yRef} style={{ ...inputBase, textAlign:'center', fontFamily:"'JetBrains Mono',monospace", maxWidth:90 }} placeholder="YYYY" maxLength={4} value={data.year} onFocus={focusIn} onBlur={focusOut}
+                      onChange={e => { const v = e.target.value.replace(/\D/g,''); setData(d => ({ ...d, year:v })); }} />
                   </div>
                 </div>
                 <div>
