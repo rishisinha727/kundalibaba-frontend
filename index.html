@@ -168,11 +168,37 @@ Object.assign(window, { AuthModal });
       return URL_TO_PAGE[slug] || 'home';
     }
 
+    // Apply SEO meta tags from CMS
+    function applySeo(seoMap, pageKey) {
+      const s = seoMap[pageKey] || {};
+      if (s.metaTitle) document.title = s.metaTitle;
+      const setMeta = (name, content, prop) => {
+        if (!content) return;
+        let el = document.querySelector(prop ? `meta[property="${name}"]` : `meta[name="${name}"]`);
+        if (!el) { el = document.createElement('meta'); el.setAttribute(prop ? 'property' : 'name', name); document.head.appendChild(el); }
+        el.setAttribute('content', content);
+      };
+      setMeta('description', s.metaDesc);
+      setMeta('og:title', s.ogTitle || s.metaTitle, true);
+      setMeta('og:description', s.ogDesc || s.metaDesc, true);
+      setMeta('og:image', s.ogImage, true);
+      let canon = document.querySelector('link[rel="canonical"]');
+      if (s.canonical) { if (!canon) { canon = document.createElement('link'); canon.setAttribute('rel','canonical'); document.head.appendChild(canon); } canon.setAttribute('href', s.canonical); }
+    }
+
     function App() {
       const [page, setPage] = React.useState(getPageFromURL);
       const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
       const [user, setUser] = React.useState(Auth.getUser());
       const [showAuth, setShowAuth] = React.useState(false);
+      const [seoMap, setSeoMap] = React.useState({});
+
+      React.useEffect(() => {
+        fetch('https://kundalibaba-backend-production.up.railway.app/api/v1/cms/pages')
+          .then(r => r.json()).then(r => setSeoMap(r.data || {})).catch(() => {});
+      }, []);
+
+      React.useEffect(() => { applySeo(seoMap, page); }, [seoMap, page]);
 
       React.useEffect(() => {
         const fn = () => setPage(getPageFromURL());
