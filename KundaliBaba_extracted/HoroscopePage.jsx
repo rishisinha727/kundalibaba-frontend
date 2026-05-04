@@ -1,8 +1,8 @@
 // ============================================================
 // KundaliBaba — Horoscope Pages
-// /horoscope          → all rashis + daily/weekly/monthly tabs
-// /horoscope/daily    → all rashis daily
-// /horoscope/daily/aries → individual rashi
+// /horoscope          → all rashis + today/weekly/monthly tabs
+// /horoscope/today    → all rashis today
+// /horoscope/today/aries → individual rashi
 // ============================================================
 
 const RASHIS = [
@@ -20,15 +20,20 @@ const RASHIS = [
   { slug:'pisces',      name:'Pisces',      hindi:'Meen',       symbol:'♓', element:'Water', lord:'Jupiter', dates:'Feb 19 – Mar 20', icon:'🐟', color:'#285E61' },
 ];
 
-const PERIODS = ['daily', 'weekly', 'monthly'];
+const PERIODS = ['today', 'weekly', 'monthly'];
 const BACKEND  = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
+
+// Map URL slug → API period value
+const PERIOD_API = { today: 'daily', weekly: 'weekly', monthly: 'monthly' };
+// Map URL slug → display label
+const PERIOD_LABEL = { today: 'Today', weekly: 'Weekly', monthly: 'Monthly' };
 
 function useHoroscopes(period) {
   const [data, setData] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   React.useEffect(() => {
     setLoading(true);
-    fetch(`${BACKEND}/content/horoscopes?period=${period}`)
+    fetch(`${BACKEND}/content/horoscopes?period=${PERIOD_API[period] || period}`)
       .then(r => r.json())
       .then(r => {
         const map = {};
@@ -76,7 +81,7 @@ function RashiCard({ rashi, horoscope, period, onNavigate, compact }) {
             ))}
           </div>
         )}
-        <span style={{ fontSize:12, fontWeight:700, color:'#E8890C' }}>Read full {period} →</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#E8890C' }}>Read {PERIOD_LABEL[period] || period} Horoscope →</span>
       </div>
     </div>
   );
@@ -88,11 +93,11 @@ function RashiDetailPage({ rashiSlug, period, onNavigate }) {
   const rashi = RASHIS.find(r => r.slug === rashiSlug);
   const [horoscope, setHoroscope] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
-  const [activePeriod, setActivePeriod] = React.useState(period || 'daily');
+  const [activePeriod, setActivePeriod] = React.useState(period || 'today');
 
   React.useEffect(() => {
     setLoading(true);
-    fetch(`${BACKEND}/content/horoscopes/${rashiSlug}?period=${activePeriod}`)
+    fetch(`${BACKEND}/content/horoscopes/${rashiSlug}?period=${PERIOD_API[activePeriod] || activePeriod}`)
       .then(r => r.json())
       .then(r => { setHoroscope(r.data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -116,7 +121,7 @@ function RashiDetailPage({ rashiSlug, period, onNavigate }) {
       <div style={{ background:`linear-gradient(135deg, #060D20 0%, #0D1B3E 60%, ${rashi.color}44 100%)`, padding: isMobile ? '48px 16px 40px' : '64px 32px 56px', position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(245,200,66,0.04) 1px, transparent 1px)', backgroundSize:'28px 28px', pointerEvents:'none' }} />
         <div style={{ maxWidth:860, margin:'0 auto', position:'relative' }}>
-          <button onClick={() => onNavigate(`horoscope/${activePeriod}`)} style={{ background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)', color:'rgba(253,246,236,0.7)', padding:'6px 14px', borderRadius:8, fontSize:12, cursor:'pointer', marginBottom:20 }}>← Back to {activePeriod.charAt(0).toUpperCase()+activePeriod.slice(1)} Horoscope</button>
+          <button onClick={() => onNavigate(`horoscope/${activePeriod}`)} style={{ background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)', color:'rgba(253,246,236,0.7)', padding:'6px 14px', borderRadius:8, fontSize:12, cursor:'pointer', marginBottom:20 }}>← Back to {PERIOD_LABEL[activePeriod] || activePeriod} Horoscope</button>
           <div style={{ display:'flex', alignItems:'center', gap:20, marginBottom:20, flexWrap:'wrap' }}>
             <span style={{ fontSize: isMobile ? 56 : 72 }}>{rashi.icon}</span>
             <div>
@@ -130,7 +135,7 @@ function RashiDetailPage({ rashiSlug, period, onNavigate }) {
             {PERIODS.map(p => (
               <button key={p} onClick={() => { setActivePeriod(p); onNavigate(`horoscope/${p}/${rashiSlug}`); }}
                 style={{ padding:'8px 20px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: activePeriod===p ? '#F5C842' : 'rgba(255,255,255,0.1)', color: activePeriod===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
-                {p.charAt(0).toUpperCase()+p.slice(1)}
+                {PERIOD_LABEL[p] || p}
               </button>
             ))}
           </div>
@@ -143,10 +148,10 @@ function RashiDetailPage({ rashiSlug, period, onNavigate }) {
           {/* Main horoscope text */}
           <div style={{ background:'white', borderRadius:16, padding: isMobile ? '24px' : '36px', border:'1px solid #EDD9B8', boxShadow:'0 2px 12px rgba(13,27,62,0.06)' }}>
             <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'#E8890C', marginBottom:12 }}>
-              {activePeriod.charAt(0).toUpperCase()+activePeriod.slice(1)} Horoscope
+              {PERIOD_LABEL[activePeriod] || activePeriod} Horoscope
             </div>
             <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 20 : 24, fontWeight:700, color:'#0D1B3E', marginBottom:20 }}>
-              {rashi.name} {activePeriod.charAt(0).toUpperCase()+activePeriod.slice(1)} Horoscope
+              {rashi.name} {PERIOD_LABEL[activePeriod] || activePeriod} Horoscope
             </h2>
             {loading ? (
               <div style={{ color:'#A07850', fontSize:14 }}>Loading your horoscope...</div>
@@ -227,10 +232,10 @@ function HoroscopeListPage({ period, onNavigate }) {
         <div style={{ maxWidth:1280, margin:'0 auto', position:'relative' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#F5C842', marginBottom:12 }}>✦ Vedic Astrology</div>
           <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 32 : 48, fontWeight:800, color:'white', margin:'0 0 10px', lineHeight:1.1 }}>
-            {period.charAt(0).toUpperCase()+period.slice(1)} Horoscope
+            {PERIOD_LABEL[period] || period} Horoscope
           </h1>
           <p style={{ fontSize:14, color:'rgba(253,246,236,0.6)', margin:'0 0 28px', maxWidth:520 }}>
-            {period==='daily' ? "What does today hold for your rashi? Read your personalized daily prediction." :
+            {period==='today' ? "What does today hold for your rashi? Read your personalized Vedic prediction." :
              period==='weekly' ? "Your week ahead — love, career, health and spiritual growth by rashi." :
              "Monthly cosmic overview for all 12 rashis — plan your month with planetary guidance."}
           </p>
@@ -238,7 +243,7 @@ function HoroscopeListPage({ period, onNavigate }) {
             {PERIODS.map(p => (
               <button key={p} onClick={() => onNavigate(`horoscope/${p}`)}
                 style={{ padding:'8px 20px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: period===p ? '#F5C842' : 'rgba(255,255,255,0.1)', color: period===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
-                {p.charAt(0).toUpperCase()+p.slice(1)}
+                {PERIOD_LABEL[p] || p}
               </button>
             ))}
           </div>
@@ -264,7 +269,7 @@ function HoroscopeListPage({ period, onNavigate }) {
 // ── Main Horoscope Hub Page (/horoscope) ────────────────────────
 function HoroscopeHubPage({ onNavigate }) {
   const isMobile = useMobile();
-  const [activePeriod, setActivePeriod] = React.useState('daily');
+  const [activePeriod, setActivePeriod] = React.useState('today');
   const { data, loading } = useHoroscopes(activePeriod);
   const sliderRef = React.useRef(null);
 
@@ -279,14 +284,14 @@ function HoroscopeHubPage({ onNavigate }) {
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#F5C842', marginBottom:12 }}>✦ Vedic Astrology · 12 Rashis</div>
           <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 34 : 54, fontWeight:800, color:'white', margin:'0 0 14px', lineHeight:1.1 }}>Today's Horoscope</h1>
           <p style={{ fontSize: isMobile ? 14 : 16, color:'rgba(253,246,236,0.6)', margin:'0 auto 32px', maxWidth:520, lineHeight:1.7 }}>
-            Free daily, weekly & monthly horoscope for all 12 rashis based on Vedic astrology principles.
+            Free today's, weekly & monthly horoscope for all 12 rashis based on Vedic astrology principles.
           </p>
           {/* Period selector */}
           <div style={{ display:'inline-flex', gap:4, background:'rgba(255,255,255,0.08)', padding:4, borderRadius:999, border:'1px solid rgba(255,255,255,0.12)' }}>
             {PERIODS.map(p => (
               <button key={p} onClick={() => setActivePeriod(p)}
                 style={{ padding:'9px 24px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: activePeriod===p ? '#F5C842' : 'transparent', color: activePeriod===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
-                {p.charAt(0).toUpperCase()+p.slice(1)}
+                {PERIOD_LABEL[p] || p}
               </button>
             ))}
           </div>
@@ -298,7 +303,7 @@ function HoroscopeHubPage({ onNavigate }) {
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding: isMobile ? '0 16px' : '0 32px', marginBottom:20 }}>
           <div>
             <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 20 : 26, fontWeight:700, color:'#0D1B3E', margin:0 }}>
-              {activePeriod.charAt(0).toUpperCase()+activePeriod.slice(1)} Horoscope — All Rashis
+              {PERIOD_LABEL[activePeriod] || activePeriod} Horoscope — All Rashis
             </h2>
           </div>
           {!isMobile && (
@@ -322,7 +327,7 @@ function HoroscopeHubPage({ onNavigate }) {
         <div style={{ padding: isMobile ? '0 16px' : '0 32px', marginTop:8 }}>
           <button onClick={() => onNavigate(`horoscope/${activePeriod}`)}
             style={{ background:'none', border:'1.5px solid #E8890C', color:'#E8890C', padding:'10px 24px', borderRadius:999, fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer' }}>
-            View All {activePeriod.charAt(0).toUpperCase()+activePeriod.slice(1)} Horoscopes →
+            View All {PERIOD_LABEL[activePeriod] || activePeriod} Horoscopes →
           </button>
         </div>
       </div>
@@ -331,7 +336,7 @@ function HoroscopeHubPage({ onNavigate }) {
       <div style={{ background:'white', padding: isMobile ? '36px 16px' : '56px 32px', borderTop:'1px solid #EDD9B8' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
           <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 22 : 28, fontWeight:700, color:'#0D1B3E', marginBottom:8 }}>Choose Your Rashi</h2>
-          <p style={{ fontSize:13, color:'#A07850', marginBottom:28 }}>Select your zodiac sign for detailed daily, weekly and monthly predictions</p>
+          <p style={{ fontSize:13, color:'#A07850', marginBottom:28 }}>Select your zodiac sign for today's, weekly and monthly predictions</p>
           <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(3,1fr)' : 'repeat(6,1fr)', gap: isMobile ? 10 : 16 }}>
             {RASHIS.map(r => (
               <div key={r.slug} onClick={() => onNavigate(`horoscope/${activePeriod}/${r.slug}`)}
@@ -365,7 +370,7 @@ function HoroscopePage({ path, onNavigate }) {
 
 // ── Homepage horoscope section (rashi slider + grid) ─────────────
 function HoroscopeHomeSectionInner({ onNavigate, isMobile }) {
-  const [activePeriod, setActivePeriod] = React.useState('daily');
+  const [activePeriod, setActivePeriod] = React.useState('today');
   const { data, loading } = useHoroscopes(activePeriod);
   const sliderRef = React.useRef(null);
   const scroll = (dir) => { if (sliderRef.current) sliderRef.current.scrollBy({ left: dir * 280, behavior:'smooth' }); };
@@ -380,7 +385,7 @@ function HoroscopeHomeSectionInner({ onNavigate, isMobile }) {
               background: activePeriod===p ? '#E8890C' : 'white',
               borderColor: activePeriod===p ? '#E8890C' : '#EDD9B8',
               color: activePeriod===p ? 'white' : '#A07850' }}>
-            {p.charAt(0).toUpperCase()+p.slice(1)}
+            {PERIOD_LABEL[p] || p}
           </button>
         ))}
       </div>
