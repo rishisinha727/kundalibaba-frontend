@@ -201,6 +201,18 @@ function LandingPage({ onNavigate }) {
 
       <TrustBar />
 
+      {/* ── HOROSCOPE SECTION ── */}
+      <section style={{ padding: isMobile ? '48px 0' : '72px 0', background:'white', borderBottom:'1px solid #EDD9B8' }}>
+        <div style={{ maxWidth:1280, margin:'0 auto' }}>
+          <div style={{ textAlign:'center', marginBottom: isMobile ? 28 : 44, padding:'0 16px' }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#E8890C', marginBottom:10 }}>✦ Vedic Astrology · Free Daily Updates</div>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 26 : 38, fontWeight:800, color:'#0D1B3E', margin:'0 0 10px', lineHeight:1.15 }}>Today's Horoscope</h2>
+            <p style={{ fontSize: isMobile ? 13 : 15, color:'#6B4C2A', margin:'0 auto', maxWidth:500, lineHeight:1.7 }}>Free daily horoscope for all 12 rashis — based on Vedic astrology and today's planetary positions.</p>
+          </div>
+          <HoroscopeHomeSectionInner onNavigate={onNavigate} isMobile={isMobile} />
+        </div>
+      </section>
+
       {/* ── PAIN POINTS ── */}
       <section style={{ padding: sectionPad, background:'#FFF9F0' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>

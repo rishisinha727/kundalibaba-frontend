@@ -61,7 +61,7 @@
 
   <!-- Design system: tweaks panel, shared components, pages -->
   <script type="text/babel" src="KundaliBaba_extracted/tweaks-panel.jsx?v=11"></script>
-  <script type="text/babel" src="KundaliBaba_extracted/Components.jsx?v=11"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/Components.jsx?v=13"></script>
   <script type="text/babel">
 // ============================================================
 // KundaliBaba — Auth Modal (Google Login) — inlined to bypass CDN cache
@@ -137,11 +137,12 @@ function AuthModal({ onClose, onSuccess }) {
 }
 Object.assign(window, { AuthModal });
   </script>
-  <script type="text/babel" src="KundaliBaba_extracted/LandingPage.jsx?v=12"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/LandingPage.jsx?v=13"></script>
   <script type="text/babel" src="KundaliBaba_extracted/HomePage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/ChatPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/KundaliPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/ShopPage.jsx?v=12"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/HoroscopePage.jsx?v=12"></script>
 
   <!-- App shell -->
   <script type="text/babel">
@@ -153,6 +154,7 @@ Object.assign(window, { AuthModal });
       matching: '/kundali-matching-online',
       chat:     '/chat-with-astrologer',
       shop:     '/shop',
+      horoscope: '/horoscope',
     };
 
     const URL_TO_PAGE = {
@@ -161,10 +163,13 @@ Object.assign(window, { AuthModal });
       'kundali-matching-online': 'matching',
       'chat-with-astrologer':    'chat',
       'shop':                    'shop',
+      'horoscope':               'horoscope',
     };
 
     function getPageFromURL() {
       const slug = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
+      // Handle horoscope sub-paths: horoscope/daily, horoscope/daily/aries
+      if (slug.startsWith('horoscope')) return slug;
       return URL_TO_PAGE[slug] || slug || 'home';
     }
 
@@ -234,7 +239,9 @@ Object.assign(window, { AuthModal });
 
       const onNavigate = (pg) => {
         setPage(pg);
-        window.history.pushState({}, '', PAGE_TO_URL[pg] || '/');
+        // Horoscope sub-paths use the slug directly (e.g. 'horoscope/daily/aries')
+        const url = PAGE_TO_URL[pg] || (pg.startsWith('horoscope') ? `/${pg}` : `/${pg}`);
+        window.history.pushState({}, '', url);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
 
@@ -246,7 +253,8 @@ Object.assign(window, { AuthModal });
 
       const isKundali = page === 'kundali' || page === 'matching';
       const hideFooter = page === 'chat';
-      const isKnownPage = ['home','kundali','matching','chat','shop'].includes(page);
+      const isHoroscope = page.startsWith('horoscope');
+      const isKnownPage = ['home','kundali','matching','chat','shop'].includes(page) || isHoroscope;
       const isCustomPage = !isKnownPage && page !== 'home';
 
       return (
@@ -257,6 +265,7 @@ Object.assign(window, { AuthModal });
           {isKundali        && <KundaliPage onNavigate={onNavigate} tweaks={t} initialSubPage={page} key={page} onShowAuth={() => setShowAuth(true)} />}
           {page === 'chat'  && <ChatPage    onNavigate={onNavigate} tweaks={t} user={user} onShowAuth={() => setShowAuth(true)} />}
           {page === 'shop'  && <ShopPage    onNavigate={onNavigate} />}
+          {isHoroscope      && <HoroscopePage path={page} onNavigate={onNavigate} />}
           {isCustomPage     && <CustomPageView slug={page} onNavigate={onNavigate} />}
 
           {!hideFooter && <KBFooter onNavigate={onNavigate} />}

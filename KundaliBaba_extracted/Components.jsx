@@ -123,7 +123,7 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
   const navigate = (pg) => { onNavigate(pg); setMobileOpen(false); };
 
   const links = [
-    { id:'home', label:'Horoscope' },
+    { id:'horoscope', label:'Horoscope' },
     { id:'kundali', label:'Free Kundali' },
     { id:'matching', label:'Kundali Match' },
     { id:'chat', label:'Talk to Pandit' },
@@ -157,18 +157,21 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
         {/* Desktop links */}
         {!isMobile && (
           <div style={{ display:'flex', alignItems:'center', gap:2, flex:1 }}>
-            {links.map(l => (
-              <span key={l.id} onClick={() => navigate(l.id)} style={{
-                padding:'8px 13px', fontSize:13.5, fontWeight:500,
-                color: currentPage === l.id ? '#F5C842' : 'rgba(253,246,236,0.72)',
-                borderRadius:6, cursor:'pointer',
-                borderBottom: currentPage === l.id ? '2px solid #E8890C' : '2px solid transparent',
-                transition:'all 150ms',
-              }}
-                onMouseEnter={e => { if (currentPage !== l.id) e.target.style.color = 'white'; }}
-                onMouseLeave={e => { if (currentPage !== l.id) e.target.style.color = 'rgba(253,246,236,0.72)'; }}
-              >{l.label}</span>
-            ))}
+            {links.map(l => {
+              const isActive = currentPage === l.id || currentPage.startsWith(l.id + '/');
+              return (
+                <span key={l.id} onClick={() => navigate(l.id)} style={{
+                  padding:'8px 13px', fontSize:13.5, fontWeight:500,
+                  color: isActive ? '#F5C842' : 'rgba(253,246,236,0.72)',
+                  borderRadius:6, cursor:'pointer',
+                  borderBottom: isActive ? '2px solid #E8890C' : '2px solid transparent',
+                  transition:'all 150ms',
+                }}
+                  onMouseEnter={e => { if (!isActive) e.target.style.color = 'white'; }}
+                  onMouseLeave={e => { if (!isActive) e.target.style.color = 'rgba(253,246,236,0.72)'; }}
+                >{l.label}</span>
+              );
+            })}
           </div>
         )}
 
@@ -210,11 +213,14 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
       {/* Mobile dropdown */}
       {isMobile && mobileOpen && (
         <div style={{ background:'#0D1B3E', borderBottom:'1px solid rgba(245,200,66,0.2)', padding:'8px 0', position:'absolute', width:'100%', zIndex:399, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
-          {links.map(l => (
-            <div key={l.id} onClick={() => navigate(l.id)} style={{ padding:'13px 20px', fontSize:15, fontWeight:500, color: currentPage === l.id ? '#F5C842' : 'rgba(253,246,236,0.8)', cursor:'pointer', borderLeft: currentPage === l.id ? '3px solid #E8890C' : '3px solid transparent', transition:'all 150ms' }}>
-              {l.label}
-            </div>
-          ))}
+          {links.map(l => {
+            const isActive = currentPage === l.id || currentPage.startsWith(l.id + '/');
+            return (
+              <div key={l.id} onClick={() => navigate(l.id)} style={{ padding:'13px 20px', fontSize:15, fontWeight:500, color: isActive ? '#F5C842' : 'rgba(253,246,236,0.8)', cursor:'pointer', borderLeft: isActive ? '3px solid #E8890C' : '3px solid transparent', transition:'all 150ms' }}>
+                {l.label}
+              </div>
+            );
+          })}
           <div style={{ borderTop:'1px solid rgba(245,200,66,0.1)', margin:'8px 0' }} />
           {user ? (
             <div style={{ padding:'8px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
