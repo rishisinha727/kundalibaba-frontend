@@ -23,6 +23,17 @@ const KB = {
   success: '#2E7D32',
 };
 
+// ---- useMobile hook ----
+function useMobile() {
+  const [mobile, setMobile] = React.useState(window.innerWidth < 768);
+  React.useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+  return mobile;
+}
+
 // ---- KBButton ----
 function KBButton({ children, variant = 'primary', size = 'md', onClick, style: ex = {}, disabled }) {
   const base = { fontFamily:'inherit', cursor: disabled ? 'not-allowed' : 'pointer', border:'none', fontWeight:600, transition:'all 150ms ease', display:'inline-flex', alignItems:'center', gap:6, opacity: disabled ? 0.55 : 1 };
@@ -62,17 +73,19 @@ function StarRating({ rating, count }) {
 
 // ---- SectionHeader ----
 function SectionHeader({ label, title, subtitle, light }) {
+  const isMobile = useMobile();
   return (
     <div style={{ textAlign:'center', marginBottom:40 }}>
       {label && <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color: light ? '#F5C842' : '#E8890C', marginBottom:10 }}>✦ {label}</div>}
-      <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color: light ? 'white' : '#0D1B3E', margin:'0 0 14px', lineHeight:1.2, letterSpacing:'-0.01em' }}>{title}</h2>
-      {subtitle && <p style={{ fontSize:15, color: light ? 'rgba(253,246,236,0.65)' : '#6B4C2A', maxWidth:520, margin:'0 auto', lineHeight:1.65, textWrap:'pretty' }}>{subtitle}</p>}
+      <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 26 : 36, fontWeight:700, color: light ? 'white' : '#0D1B3E', margin:'0 0 14px', lineHeight:1.2, letterSpacing:'-0.01em' }}>{title}</h2>
+      {subtitle && <p style={{ fontSize: isMobile ? 14 : 15, color: light ? 'rgba(253,246,236,0.65)' : '#6B4C2A', maxWidth:520, margin:'0 auto', lineHeight:1.65 }}>{subtitle}</p>}
     </div>
   );
 }
 
 // ---- TrustBar ----
 function TrustBar() {
+  const isMobile = useMobile();
   const stats = [
     { val:'10L+', label:'Consultations' },
     { val:'1200+', label:'Verified Pandits' },
@@ -81,12 +94,12 @@ function TrustBar() {
     { val:'₹10/min', label:'Starting Price' },
   ];
   return (
-    <div style={{ background:'rgba(245,200,66,0.07)', borderTop:'1px solid rgba(245,200,66,0.18)', borderBottom:'1px solid rgba(245,200,66,0.18)', padding:'14px 32px' }}>
-      <div style={{ maxWidth:1280, margin:'0 auto', display:'flex', justifyContent:'center', gap:40, flexWrap:'wrap' }}>
+    <div style={{ background:'rgba(245,200,66,0.07)', borderTop:'1px solid rgba(245,200,66,0.18)', borderBottom:'1px solid rgba(245,200,66,0.18)', padding: isMobile ? '12px 16px' : '14px 32px' }}>
+      <div style={{ maxWidth:1280, margin:'0 auto', display:'flex', justifyContent:'center', gap: isMobile ? 16 : 40, flexWrap:'wrap' }}>
         {stats.map(s => (
           <div key={s.val} style={{ textAlign:'center' }}>
-            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, color:'#F5C842', lineHeight:1 }}>{s.val}</div>
-            <div style={{ fontSize:11, color:'rgba(253,246,236,0.5)', marginTop:3, letterSpacing:'0.05em' }}>{s.label}</div>
+            <div style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 16 : 20, fontWeight:700, color:'#F5C842', lineHeight:1 }}>{s.val}</div>
+            <div style={{ fontSize:10, color:'rgba(253,246,236,0.5)', marginTop:3, letterSpacing:'0.05em' }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -98,12 +111,16 @@ function TrustBar() {
 function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const isMobile = useMobile();
 
   React.useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', fn);
     return () => window.removeEventListener('scroll', fn);
   }, []);
+
+  // Close mobile menu on nav
+  const navigate = (pg) => { onNavigate(pg); setMobileOpen(false); };
 
   const links = [
     { id:'home', label:'Horoscope' },
@@ -118,126 +135,162 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
     : (tweaks?.darkNav ? '#060D20' : '#0D1B3E');
 
   return (
-    <nav style={{
-      position:'sticky', top:0, zIndex:400,
-      background: navBg,
-      backdropFilter: scrolled ? 'blur(14px)' : 'none',
-      borderBottom: '1px solid rgba(245,200,66,0.12)',
-      transition:'all 300ms ease',
-      height:64, display:'flex', alignItems:'center',
-      padding:'0 32px',
-    }}>
-      {/* Logo */}
-      <div onClick={() => onNavigate('home')} style={{ display:'flex', alignItems:'center', gap:10, marginRight:40, cursor:'pointer', flexShrink:0 }}>
-        <svg width="30" height="30" viewBox="0 0 64 64" fill="none">
-          <circle cx="32" cy="32" r="29" stroke="#E8890C" strokeWidth="2" fill="none" opacity="0.4"/>
-          <polygon points="32,6 35.5,24 50,16 40,29 56,32 40,35 50,48 35.5,40 32,58 28.5,40 14,48 24,35 8,32 24,29 14,16 28.5,24" fill="#E8890C" opacity="0.9"/>
-          <circle cx="32" cy="32" r="5" fill="#F5C842"/>
-        </svg>
-        <span style={{ fontFamily:"'Playfair Display',serif", fontSize:19, fontWeight:700, color:'#F5C842', letterSpacing:'-0.2px' }}>Kundalibaba</span>
-      </div>
+    <div style={{ position:'sticky', top:0, zIndex:400 }}>
+      <nav style={{
+        background: navBg,
+        backdropFilter: scrolled ? 'blur(14px)' : 'none',
+        borderBottom: '1px solid rgba(245,200,66,0.12)',
+        transition:'all 300ms ease',
+        height:64, display:'flex', alignItems:'center',
+        padding: isMobile ? '0 16px' : '0 32px',
+      }}>
+        {/* Logo */}
+        <div onClick={() => navigate('home')} style={{ display:'flex', alignItems:'center', gap:8, marginRight: isMobile ? 0 : 40, cursor:'pointer', flexShrink:0 }}>
+          <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="29" stroke="#E8890C" strokeWidth="2" fill="none" opacity="0.4"/>
+            <polygon points="32,6 35.5,24 50,16 40,29 56,32 40,35 50,48 35.5,40 32,58 28.5,40 14,48 24,35 8,32 24,29 14,16 28.5,24" fill="#E8890C" opacity="0.9"/>
+            <circle cx="32" cy="32" r="5" fill="#F5C842"/>
+          </svg>
+          <span style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 17 : 19, fontWeight:700, color:'#F5C842', letterSpacing:'-0.2px' }}>Kundalibaba</span>
+        </div>
 
-      {/* Links */}
-      <div style={{ display:'flex', alignItems:'center', gap:2, flex:1 }}>
-        {links.map(l => (
-          <span key={l.id} onClick={() => onNavigate(l.id)} style={{
-            padding:'8px 13px', fontSize:13.5, fontWeight:500,
-            color: currentPage === l.id ? '#F5C842' : 'rgba(253,246,236,0.72)',
-            borderRadius:6, cursor:'pointer',
-            borderBottom: currentPage === l.id ? '2px solid #E8890C' : '2px solid transparent',
-            transition:'all 150ms',
-          }}
-            onMouseEnter={e => { if (currentPage !== l.id) e.target.style.color = 'white'; }}
-            onMouseLeave={e => { if (currentPage !== l.id) e.target.style.color = 'rgba(253,246,236,0.72)'; }}
-          >{l.label}</span>
-        ))}
-      </div>
-
-      {/* Actions */}
-      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        {user ? (
-          <>
-            <div style={{ fontSize:13, color:'rgba(253,246,236,0.7)', fontWeight:500 }}>
-              👤 {user.name || user.phone}
-            </div>
-            <button onClick={onLogout} style={{
-              padding:'7px 18px', border:'1.5px solid rgba(245,200,66,0.35)',
-              borderRadius:8, background:'transparent', color:'#F5C842',
-              fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 150ms',
-            }}
-              onMouseEnter={e => { e.target.style.background = 'rgba(245,200,66,0.1)'; }}
-              onMouseLeave={e => { e.target.style.background = 'transparent'; }}
-            >Logout</button>
-          </>
-        ) : (
-          <button onClick={onSignIn} style={{
-            padding:'7px 18px', border:'1.5px solid rgba(245,200,66,0.35)',
-            borderRadius:8, background:'transparent', color:'#F5C842',
-            fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 150ms',
-          }}
-            onMouseEnter={e => { e.target.style.background = 'rgba(245,200,66,0.1)'; }}
-            onMouseLeave={e => { e.target.style.background = 'transparent'; }}
-          >Sign In</button>
+        {/* Desktop links */}
+        {!isMobile && (
+          <div style={{ display:'flex', alignItems:'center', gap:2, flex:1 }}>
+            {links.map(l => (
+              <span key={l.id} onClick={() => navigate(l.id)} style={{
+                padding:'8px 13px', fontSize:13.5, fontWeight:500,
+                color: currentPage === l.id ? '#F5C842' : 'rgba(253,246,236,0.72)',
+                borderRadius:6, cursor:'pointer',
+                borderBottom: currentPage === l.id ? '2px solid #E8890C' : '2px solid transparent',
+                transition:'all 150ms',
+              }}
+                onMouseEnter={e => { if (currentPage !== l.id) e.target.style.color = 'white'; }}
+                onMouseLeave={e => { if (currentPage !== l.id) e.target.style.color = 'rgba(253,246,236,0.72)'; }}
+              >{l.label}</span>
+            ))}
+          </div>
         )}
-        <button onClick={() => onNavigate('chat')} style={{
-          padding:'8px 20px', background:'#E8890C', border:'none',
-          borderRadius:999, color:'white', fontSize:13, fontWeight:700,
-          cursor:'pointer', fontFamily:'inherit',
-          boxShadow:'0 3px 12px rgba(232,137,12,0.45)', transition:'all 150ms',
-        }}
-          onMouseEnter={e => { e.target.style.filter = 'brightness(1.1)'; }}
-          onMouseLeave={e => { e.target.style.filter = ''; }}
-        >Talk Now</button>
-      </div>
-    </nav>
+
+        {/* Desktop actions */}
+        {!isMobile && (
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            {user ? (
+              <>
+                <div style={{ fontSize:13, color:'rgba(253,246,236,0.7)', fontWeight:500 }}>👤 {user.name || user.phone}</div>
+                <button onClick={onLogout} style={{ padding:'7px 18px', border:'1.5px solid rgba(245,200,66,0.35)', borderRadius:8, background:'transparent', color:'#F5C842', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 150ms' }}
+                  onMouseEnter={e => { e.target.style.background = 'rgba(245,200,66,0.1)'; }}
+                  onMouseLeave={e => { e.target.style.background = 'transparent'; }}
+                >Logout</button>
+              </>
+            ) : (
+              <button onClick={onSignIn} style={{ padding:'7px 18px', border:'1.5px solid rgba(245,200,66,0.35)', borderRadius:8, background:'transparent', color:'#F5C842', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 150ms' }}
+                onMouseEnter={e => { e.target.style.background = 'rgba(245,200,66,0.1)'; }}
+                onMouseLeave={e => { e.target.style.background = 'transparent'; }}
+              >Sign In</button>
+            )}
+            <button onClick={() => navigate('chat')} style={{ padding:'8px 20px', background:'#E8890C', border:'none', borderRadius:999, color:'white', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 3px 12px rgba(232,137,12,0.45)', transition:'all 150ms' }}
+              onMouseEnter={e => { e.target.style.filter = 'brightness(1.1)'; }}
+              onMouseLeave={e => { e.target.style.filter = ''; }}
+            >Talk Now</button>
+          </div>
+        )}
+
+        {/* Mobile right side */}
+        {isMobile && (
+          <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:10 }}>
+            <button onClick={() => navigate('chat')} style={{ padding:'7px 14px', background:'#E8890C', border:'none', borderRadius:999, color:'white', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>Talk Now</button>
+            <button onClick={() => setMobileOpen(o => !o)} style={{ background:'none', border:'none', cursor:'pointer', padding:'4px', color:'#F5C842', fontSize:22, lineHeight:1, display:'flex', alignItems:'center' }}>
+              {mobileOpen ? '✕' : '☰'}
+            </button>
+          </div>
+        )}
+      </nav>
+
+      {/* Mobile dropdown */}
+      {isMobile && mobileOpen && (
+        <div style={{ background:'#0D1B3E', borderBottom:'1px solid rgba(245,200,66,0.2)', padding:'8px 0', position:'absolute', width:'100%', zIndex:399, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
+          {links.map(l => (
+            <div key={l.id} onClick={() => navigate(l.id)} style={{ padding:'13px 20px', fontSize:15, fontWeight:500, color: currentPage === l.id ? '#F5C842' : 'rgba(253,246,236,0.8)', cursor:'pointer', borderLeft: currentPage === l.id ? '3px solid #E8890C' : '3px solid transparent', transition:'all 150ms' }}>
+              {l.label}
+            </div>
+          ))}
+          <div style={{ borderTop:'1px solid rgba(245,200,66,0.1)', margin:'8px 0' }} />
+          {user ? (
+            <div style={{ padding:'8px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ fontSize:13, color:'rgba(253,246,236,0.7)' }}>👤 {user.name || user.phone}</span>
+              <button onClick={() => { onLogout(); setMobileOpen(false); }} style={{ padding:'6px 14px', border:'1.5px solid rgba(245,200,66,0.35)', borderRadius:8, background:'transparent', color:'#F5C842', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Logout</button>
+            </div>
+          ) : (
+            <div style={{ padding:'8px 20px' }}>
+              <button onClick={() => { onSignIn(); setMobileOpen(false); }} style={{ width:'100%', padding:'10px 0', border:'1.5px solid rgba(245,200,66,0.35)', borderRadius:8, background:'transparent', color:'#F5C842', fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Sign In with Google</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
 // ---- KBFooter ----
 function KBFooter({ onNavigate }) {
+  const isMobile = useMobile();
   return (
-    <footer style={{ background:'#060D20', padding:'56px 32px 28px', borderTop:'1px solid rgba(245,200,66,0.1)' }}>
+    <footer style={{ background:'#060D20', padding: isMobile ? '40px 20px 24px' : '56px 32px 28px', borderTop:'1px solid rgba(245,200,66,0.1)' }}>
       <div style={{ maxWidth:1280, margin:'0 auto' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr', gap:48, marginBottom:48 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr', gap: isMobile ? 32 : 48, marginBottom:40 }}>
           <div>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18 }}>
-              <svg width="26" height="26" viewBox="0 0 64 64" fill="none">
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
+              <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
                 <polygon points="32,6 35.5,24 50,16 40,29 56,32 40,35 50,48 35.5,40 32,58 28.5,40 14,48 24,35 8,32 24,29 14,16 28.5,24" fill="#E8890C" opacity="0.9"/>
                 <circle cx="32" cy="32" r="5" fill="#F5C842"/>
               </svg>
               <span style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:'#F5C842' }}>Kundalibaba</span>
             </div>
-            <p style={{ fontSize:13, color:'rgba(253,246,236,0.45)', lineHeight:1.75, maxWidth:240, marginBottom:20 }}>
+            <p style={{ fontSize:13, color:'rgba(253,246,236,0.45)', lineHeight:1.75, maxWidth:240, marginBottom:18 }}>
               AI-powered Vedic astrology platform. Talk to verified pandits, get your free kundali, and shop certified ratna.
             </p>
             <div style={{ display:'flex', gap:8 }}>
               {['App Store', 'Google Play'].map(s => (
-                <div key={s} style={{ background:'rgba(253,246,236,0.07)', border:'1px solid rgba(245,200,66,0.18)', borderRadius:8, padding:'7px 13px', fontSize:11, color:'rgba(253,246,236,0.65)', cursor:'pointer', transition:'all 150ms' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(245,200,66,0.4)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(245,200,66,0.18)'; }}
-                >{s}</div>
+                <div key={s} style={{ background:'rgba(253,246,236,0.07)', border:'1px solid rgba(245,200,66,0.18)', borderRadius:8, padding:'7px 13px', fontSize:11, color:'rgba(253,246,236,0.65)', cursor:'pointer' }}>{s}</div>
               ))}
             </div>
           </div>
-          {[
-            { title:'Services', links:['Free Kundali','Kundali Matching','Daily Horoscope','Numerology','Talk to Pandit','Gemstone Shop'] },
-            { title:'Company', links:['About Us','Blog','Our Astrologers','Careers','Press Kit'] },
-            { title:'Support', links:['Help Center','Privacy Policy','Terms of Use','Refund Policy','Contact Us'] },
-          ].map(col => (
-            <div key={col.title}>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(253,246,236,0.35)', marginBottom:16 }}>{col.title}</div>
-              {col.links.map(l => (
-                <div key={l} style={{ fontSize:13, color:'rgba(253,246,236,0.55)', marginBottom:10, cursor:'pointer', transition:'color 150ms' }}
-                  onMouseEnter={e => e.target.style.color='#E8890C'}
-                  onMouseLeave={e => e.target.style.color='rgba(253,246,236,0.55)'}
-                >{l}</div>
+          {isMobile ? (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24 }}>
+              {[
+                { title:'Services', links:['Free Kundali','Kundali Matching','Daily Horoscope','Talk to Pandit','Gemstone Shop'] },
+                { title:'Support', links:['Help Center','Privacy Policy','Terms of Use','Contact Us'] },
+              ].map(col => (
+                <div key={col.title}>
+                  <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(253,246,236,0.35)', marginBottom:12 }}>{col.title}</div>
+                  {col.links.map(l => (
+                    <div key={l} style={{ fontSize:13, color:'rgba(253,246,236,0.55)', marginBottom:8, cursor:'pointer' }}>{l}</div>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          ) : (
+            [
+              { title:'Services', links:['Free Kundali','Kundali Matching','Daily Horoscope','Numerology','Talk to Pandit','Gemstone Shop'] },
+              { title:'Company', links:['About Us','Blog','Our Astrologers','Careers','Press Kit'] },
+              { title:'Support', links:['Help Center','Privacy Policy','Terms of Use','Refund Policy','Contact Us'] },
+            ].map(col => (
+              <div key={col.title}>
+                <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(253,246,236,0.35)', marginBottom:16 }}>{col.title}</div>
+                {col.links.map(l => (
+                  <div key={l} style={{ fontSize:13, color:'rgba(253,246,236,0.55)', marginBottom:10, cursor:'pointer', transition:'color 150ms' }}
+                    onMouseEnter={e => e.target.style.color='#E8890C'}
+                    onMouseLeave={e => e.target.style.color='rgba(253,246,236,0.55)'}
+                  >{l}</div>
+                ))}
+              </div>
+            ))
+          )}
         </div>
-        <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', paddingTop:22, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
+        <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', paddingTop:20, display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems: isMobile ? 'center' : 'center', gap:12, textAlign: isMobile ? 'center' : 'left' }}>
           <div style={{ fontSize:12, color:'rgba(253,246,236,0.3)' }}>© 2026 Kundalibaba Technologies Pvt. Ltd. All rights reserved.</div>
-          <div style={{ fontSize:16, color:'rgba(245,200,66,0.4)', letterSpacing:'0.12em' }}>♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓</div>
+          <div style={{ fontSize: isMobile ? 13 : 16, color:'rgba(245,200,66,0.4)', letterSpacing:'0.12em' }}>♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓</div>
         </div>
       </div>
     </footer>
@@ -304,4 +357,4 @@ function PanditCard({ p, onNavigate, onChat, compact }) {
   );
 }
 
-Object.assign(window, { KB, KBButton, StarRating, SectionHeader, TrustBar, KBNav, KBFooter, PanditCard });
+Object.assign(window, { KB, useMobile, KBButton, StarRating, SectionHeader, TrustBar, KBNav, KBFooter, PanditCard });
