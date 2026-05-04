@@ -974,6 +974,155 @@ function CMS() {
   );
 }
 
+// ── Horoscopes ────────────────────────────────────────────────
+const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const SIGN_ICONS = { Aries:'🐏',Taurus:'🐂',Gemini:'👯',Cancer:'🦀',Leo:'🦁',Virgo:'👧',Libra:'⚖️',Scorpio:'🦂',Sagittarius:'🏹',Capricorn:'🐐',Aquarius:'🏺',Pisces:'🐟' };
+
+function Horoscopes() {
+  const [period, setPeriod] = React.useState('daily');
+  const [data, setData] = React.useState({});
+  const [loading, setLoading] = React.useState(true);
+  const [seeding, setSeeding] = React.useState(false);
+  const [saving, setSaving] = React.useState(null);
+  const [editing, setEditing] = React.useState(null); // { sign, period, content, lucky }
+  const [toast, setToast] = React.useState('');
+
+  const showToast = msg => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+
+  const load = React.useCallback(() => {
+    setLoading(true);
+    fetch(`${API}/content/horoscopes?period=${period}`)
+      .then(r => r.json())
+      .then(r => {
+        const map = {};
+        (r.data || []).forEach(h => { map[h.sign] = h; });
+        setData(map);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [period]);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const seed = async () => {
+    if (!confirm('This will populate all 12 signs × 3 periods with real horoscope content. Continue?')) return;
+    setSeeding(true);
+    try {
+      const r = await fetch(`${API}/content/horoscopes/seed`, { method:'POST', headers:{ Authorization:`Bearer ${Auth.getToken()}` } });
+      const j = await r.json();
+      showToast(j.message || 'Seeded!');
+      load();
+    } catch { showToast('Seed failed'); }
+    setSeeding(false);
+  };
+
+  const save = async () => {
+    if (!editing) return;
+    setSaving(editing.sign);
+    try {
+      const r = await fetch(`${API}/content/horoscopes/${editing.sign}`, {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${Auth.getToken()}` },
+        body: JSON.stringify({ period: editing.period, content: editing.content, lucky: editing.lucky }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.message);
+      setData(d => ({ ...d, [editing.sign]: j.data }));
+      showToast('Saved!');
+      setEditing(null);
+    } catch(e) { showToast(e.message || 'Save failed'); }
+    setSaving(null);
+  };
+
+  const openEdit = (sign) => {
+    const h = data[sign] || {};
+    setEditing({ sign, period, content: h.content || '', lucky: h.lucky || { number:'', color:'', day:'' } });
+  };
+
+  return (
+    <div>
+      <PageHeader title="Horoscopes" sub="Manage daily, weekly & monthly horoscope content for all 12 rashis"
+        action={<Btn onClick={seed} disabled={seeding}>{seeding ? 'Seeding…' : '🌱 Seed All Content'}</Btn>} />
+
+      {toast && <div style={{ background:'#0D1B3E', color:'white', padding:'10px 20px', borderRadius:8, marginBottom:16, fontSize:13 }}>{toast}</div>}
+
+      {/* Period tabs */}
+      <div style={{ display:'flex', gap:8, marginBottom:24 }}>
+        {['daily','weekly','monthly'].map(p => (
+          <button key={p} onClick={() => setPeriod(p)}
+            style={{ padding:'8px 20px', borderRadius:999, border:'1.5px solid', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer',
+              background: period===p ? '#E8890C' : 'white', borderColor: period===p ? '#E8890C' : '#e5e7eb', color: period===p ? 'white' : '#374151' }}>
+            {p.charAt(0).toUpperCase()+p.slice(1)}
+          </button>
+        ))}
+        <button onClick={load} style={{ marginLeft:'auto', padding:'8px 16px', borderRadius:8, border:'1px solid #e5e7eb', background:'white', fontSize:13, cursor:'pointer' }}>↺ Refresh</button>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign:'center', padding:48, color:'#A07850' }}>Loading horoscopes…</div>
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+          {SIGNS.map(sign => {
+            const h = data[sign];
+            const isEmpty = !h || !h.content || h.content.includes('will be available soon');
+            return (
+              <div key={sign} style={{ background:'white', borderRadius:12, border:`1.5px solid ${isEmpty ? '#fca5a5' : '#e5e7eb'}`, padding:20 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:22 }}>{SIGN_ICONS[sign]}</span>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:700, color:'#111827' }}>{sign}</div>
+                      {h?.lucky && <div style={{ fontSize:11, color:'#6b7280' }}>#{h.lucky.number} · {h.lucky.color} · {h.lucky.day}</div>}
+                    </div>
+                  </div>
+                  <span style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:999, background: isEmpty ? '#fee2e2' : '#dcfce7', color: isEmpty ? '#b91c1c' : '#15803d' }}>
+                    {isEmpty ? 'Empty' : 'Has content'}
+                  </span>
+                </div>
+                <p style={{ fontSize:12, color:'#4b5563', lineHeight:1.6, margin:'0 0 12px', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+                  {h?.content || 'No content yet.'}
+                </p>
+                <button onClick={() => openEdit(sign)}
+                  style={{ width:'100%', padding:'7px 0', background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:8, fontSize:12, fontWeight:600, cursor:'pointer', color:'#374151' }}>
+                  ✏️ Edit
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Edit modal */}
+      {editing && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+          <div style={{ background:'white', borderRadius:16, width:'100%', maxWidth:600, padding:28, boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <div style={{ fontSize:17, fontWeight:700 }}>{SIGN_ICONS[editing.sign]} {editing.sign} — {editing.period.charAt(0).toUpperCase()+editing.period.slice(1)}</div>
+              <button onClick={() => setEditing(null)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'#9ca3af' }}>×</button>
+            </div>
+            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Horoscope Content *</label>
+            <textarea value={editing.content} onChange={e => setEditing(ed => ({...ed, content:e.target.value}))} rows={6}
+              style={{ width:'100%', padding:'10px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none', resize:'vertical', marginBottom:16, fontFamily:'inherit', lineHeight:1.7 }} />
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:20 }}>
+              {[['Lucky Number','number'],['Lucky Color','color'],['Lucky Day','day']].map(([lbl,key]) => (
+                <div key={key}>
+                  <label style={{ display:'block', fontSize:11, fontWeight:600, color:'#374151', marginBottom:4 }}>{lbl}</label>
+                  <input value={editing.lucky?.[key] || ''} onChange={e => setEditing(ed => ({...ed, lucky:{...ed.lucky,[key]:e.target.value}}))}
+                    style={{ width:'100%', padding:'7px 10px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none' }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <Btn variant="secondary" onClick={() => setEditing(null)} style={{ flex:1 }}>Cancel</Btn>
+              <Btn onClick={save} disabled={!!saving} style={{ flex:1 }}>{saving ? 'Saving…' : '💾 Save'}</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Rich Text Editor (Quill) ────────────────────────────────────
 function RichEditor({ value, onChange, placeholder }) {
   const editorRef = React.useRef(null);
@@ -1267,6 +1416,7 @@ const NAV = [
   { id:'shop',        label:'Astro Shop',          icon:'💎' },
   { id:'cms',         label:'CMS / SEO',           icon:'🔍' },
   { id:'blogs',       label:'Blog Management',     icon:'✍️' },
+  { id:'horoscopes',  label:'Horoscopes',          icon:'🔮' },
 ];
 
 function Sidebar({ current, onNav, user, onLogout }) {
@@ -1300,7 +1450,7 @@ function Sidebar({ current, onNav, user, onLogout }) {
           return <NavItem key={id} id={id} label={n.label} icon={n.icon} current={current} onNav={onNav} indent />;
         })}
         <div style={{ height:1, background:'rgba(255,255,255,0.07)', margin:'8px 8px' }} />
-        {['wallet','withdrawals','shop','cms','blogs'].map(id => {
+        {['wallet','withdrawals','shop','cms','blogs','horoscopes'].map(id => {
           const n = NAV.find(x => x.id === id);
           return <NavItem key={id} id={id} label={n.label} icon={n.icon} current={current} onNav={onNav} />;
         })}
@@ -1430,7 +1580,7 @@ function AdminApp() {
 
   if (!user) return <AdminLogin onLogin={setUser} />;
 
-  const PAGES = { dashboard:<Dashboard />, astrologers:<Astrologers />, customers:<Customers />, vendors:<Vendors />, wallet:<WalletManagement />, withdrawals:<Withdrawals />, shop:<AstroShop />, cms:<CMS />, blogs:<Blogs /> };
+  const PAGES = { dashboard:<Dashboard />, astrologers:<Astrologers />, customers:<Customers />, vendors:<Vendors />, wallet:<WalletManagement />, withdrawals:<Withdrawals />, shop:<AstroShop />, cms:<CMS />, blogs:<Blogs />, horoscopes:<Horoscopes /> };
 
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
