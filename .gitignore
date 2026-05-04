@@ -3,3 +3,10 @@
 
 # Backend lives in its own repo (github.com/rishisinha727/kundalibaba-backend)
 backend/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
