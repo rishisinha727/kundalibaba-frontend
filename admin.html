@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KundaliBaba — Admin Panel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fb; -webkit-font-smoothing: antialiased; }
+    #root { min-height: 100vh; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f0f0f0; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    input, textarea, select { font-family: inherit; }
+    table { border-collapse: collapse; width: 100%; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="KundaliBaba_extracted/api.js"></script>
+<script type="text/babel">
+
+const ADMIN_EMAIL = 'rishisinha727@gmail.com';
+const GOOGLE_CLIENT_ID = '112774249048-rfnms6tnvqi4d6gcaureisbqfd2jb7de.apps.googleusercontent.com';
+const C = { saffron:'#E8890C', navy:'#0D1B3E', dark:'#1a1f36', gold:'#F5C842', success:'#22c55e', warning:'#f59e0b', error:'#ef4444', info:'#3b82f6' };
+
+// ── Mock data ──────────────────────────────────────────────────
+const ASTROLOGERS = [
+  { id:1, name:'Pt. Rajesh Kumar',  spec:'Vedic · Kundali',   rating:4.8, status:'online',  calls:1240, earnings:45200, joined:'2024-01-15', lang:'Hindi, English', priority:1 },
+  { id:2, name:'Acharya Vikram',    spec:'KP · Nadi',          rating:4.9, status:'online',  calls:3200, earnings:92000, joined:'2023-11-20', lang:'Hindi, Marathi',  priority:2 },
+  { id:3, name:'Pt. Sunita Devi',   spec:'Numerology · Tarot', rating:4.6, status:'busy',    calls:850,  earnings:18500, joined:'2024-02-05', lang:'Hindi, Tamil',    priority:3 },
+  { id:4, name:'Pt. Mahesh Joshi',  spec:'Vedic · Marriage',   rating:4.7, status:'online',  calls:2100, earnings:58000, joined:'2023-09-10', lang:'Hindi, Gujarati', priority:4 },
+  { id:5, name:'Pt. Deepak Shastri',spec:'Palmistry',          rating:4.5, status:'offline', calls:620,  earnings:12400, joined:'2024-03-18', lang:'Hindi',           priority:5 },
+  { id:6, name:'Pt. Neha Trivedi',  spec:'Vedic · Remedies',   rating:4.7, status:'online',  calls:430,  earnings:8600,  joined:'2024-04-01', lang:'Hindi, English',  priority:6 },
+];
+
+const CUSTOMERS = [
+  { id:1, name:'Priya Sharma',   email:'priya@gmail.com',   phone:'+91 9876543210', wallet:500,  spent:2400, joined:'2024-03-10', status:'active' },
+  { id:2, name:'Ravi Kumar',     email:'ravi@gmail.com',    phone:'+91 9812345678', wallet:0,    spent:5600, joined:'2024-01-22', status:'active' },
+  { id:3, name:'Anita Mehta',    email:'anita@gmail.com',   phone:'+91 9988776655', wallet:1200, spent:800,  joined:'2024-04-15', status:'active' },
+  { id:4, name:'Suresh Patil',   email:'suresh@gmail.com',  phone:'+91 9765432109', wallet:250,  spent:3200, joined:'2023-12-05', status:'inactive' },
+  { id:5, name:'Kavita Singh',   email:'kavita@gmail.com',  phone:'+91 9543216780', wallet:750,  spent:1100, joined:'2024-05-01', status:'active' },
+];
+
+const VENDORS = [
+  { id:1, name:'Ratna Bazaar Pvt Ltd', category:'Gemstones', products:24, status:'active',  sales:128000 },
+  { id:2, name:'Vedic Books House',    category:'Books',     products:86, status:'active',  sales:45000  },
+  { id:3, name:'Puja Samagri Store',   category:'Puja Items',products:42, status:'inactive',sales:22000  },
+];
+
+const TRANSACTIONS = [
+  { id:'TXN001', user:'Priya Sharma',  type:'Recharge',    amount:500,  date:'2026-05-03', status:'success' },
+  { id:'TXN002', user:'Ravi Kumar',    type:'Consultation', amount:225,  date:'2026-05-03', status:'success' },
+  { id:'TXN003', user:'Anita Mehta',   type:'Recharge',    amount:1000, date:'2026-05-02', status:'success' },
+  { id:'TXN004', user:'Suresh Patil',  type:'Refund',      amount:150,  date:'2026-05-02', status:'pending' },
+  { id:'TXN005', user:'Kavita Singh',  type:'Consultation', amount:360,  date:'2026-05-01', status:'success' },
+  { id:'TXN006', user:'Deepak Roy',    type:'Recharge',    amount:200,  date:'2026-04-30', status:'failed'  },
+];
+
+const WITHDRAWALS = [
+  { id:'WD001', astrologer:'Pt. Rajesh Kumar', amount:15000, bank:'HDFC ****4521', requested:'2026-05-02', status:'pending'  },
+  { id:'WD002', astrologer:'Acharya Vikram',   amount:32000, bank:'SBI  ****7812', requested:'2026-05-01', status:'pending'  },
+  { id:'WD003', astrologer:'Pt. Sunita Devi',  amount:5000,  bank:'ICICI****3344', requested:'2026-04-30', status:'approved' },
+  { id:'WD004', astrologer:'Pt. Mahesh Joshi', amount:18000, bank:'Axis ****9901', requested:'2026-04-28', status:'paid'     },
+];
+
+const PRODUCTS = [
+  { id:1, name:'Yellow Sapphire (Pukhraj)', category:'Gemstones', price:4999,  stock:12, status:'active',  icon:'💛' },
+  { id:2, name:'Blue Sapphire (Neelam)',    category:'Gemstones', price:8999,  stock:5,  status:'active',  icon:'💙' },
+  { id:3, name:'Ruby (Manik)',              category:'Gemstones', price:6499,  stock:8,  status:'active',  icon:'❤️' },
+  { id:4, name:'Vedic Astrology Book',      category:'Books',     price:499,   stock:50, status:'active',  icon:'📚' },
+  { id:5, name:'Puja Thali Set',            category:'Puja',      price:1299,  stock:0,  status:'inactive',icon:'🪔' },
+];
+
+const ORDERS = [
+  { id:'ORD001', customer:'Priya Sharma', product:'Yellow Sapphire', amount:4999, date:'2026-05-03', status:'delivered' },
+  { id:'ORD002', customer:'Ravi Kumar',   product:'Blue Sapphire',   amount:8999, date:'2026-05-02', status:'processing'},
+  { id:'ORD003', customer:'Anita Mehta',  product:'Ruby (Manik)',    amount:6499, date:'2026-05-01', status:'shipped'   },
+  { id:'ORD004', customer:'Kavita Singh', product:'Vedic Book',      amount:499,  date:'2026-04-30', status:'delivered' },
+];
+
+const CMS_PAGES = [
+  { id:1, name:'Home',             url:'/',                        title:'KundaliBaba — AI-Powered Vedic Astrology', h1:'The Answers Hidden in Your Birth Chart', updated:'2026-05-01' },
+  { id:2, name:'Free Kundali',     url:'/free-kundali-online',     title:'Free Kundali Online — Janam Kundali',      h1:'Free Kundali',               updated:'2026-05-01' },
+  { id:3, name:'Kundali Matching', url:'/kundali-matching-online', title:'Kundali Matching Online — 36 Guna Milan',  h1:'Kundali Matching',           updated:'2026-05-01' },
+  { id:4, name:'Chat with Pandit', url:'/chat-with-astrologer',    title:'Talk to Astrologer Online — Live Chat',    h1:'Talk to Pandit',             updated:'2026-05-01' },
+  { id:5, name:'Gemstone Shop',    url:'/shop',                    title:'Buy Certified Gemstones — Ratna Shop',     h1:'Ratna & Gemstone Shop',      updated:'2026-05-01' },
+];
+
+const BLOG_CATEGORIES = ['Horoscope','Kundali','Numerology','Tarot Cards'];
+const BLOGS = [
+  { id:1, title:'Mercury Retrograde 2026 — What It Means for You',  category:'Horoscope', author:'Acharya Vikram', status:'published', date:'2026-05-01' },
+  { id:2, title:'How to Read Your Janam Kundali',                    category:'Kundali',   author:'Pt. Rajesh',    status:'published', date:'2026-04-28' },
+  { id:3, title:'Life Path Number Calculator & Meanings',             category:'Numerology',author:'Pt. Neha',      status:'draft',     date:'2026-04-25' },
+  { id:4, title:'The Major Arcana Explained',                         category:'Tarot Cards',author:'Pt. Sunita',   status:'published', date:'2026-04-20' },
+];
+
+const REVENUE_DATA = [
+  { day:'Mon', amount:18400 },
+  { day:'Tue', amount:24200 },
+  { day:'Wed', amount:19800 },
+  { day:'Thu', amount:31500 },
+  { day:'Fri', amount:28000 },
+  { day:'Sat', amount:42000 },
+  { day:'Sun', amount:35600 },
+];
+
+// ── Utility components ──────────────────────────────────────────
+
+function Badge({ label, color }) {
+  const colors = {
+    green:  { bg:'#dcfce7', text:'#166534' },
+    red:    { bg:'#fee2e2', text:'#991b1b' },
+    yellow: { bg:'#fef9c3', text:'#854d0e' },
+    blue:   { bg:'#dbeafe', text:'#1d4ed8' },
+    gray:   { bg:'#f3f4f6', text:'#374151' },
+    orange: { bg:'#ffedd5', text:'#9a3412' },
+  };
+  const s = colors[color] || colors.gray;
+  return <span style={{ background:s.bg, color:s.text, padding:'2px 10px', borderRadius:999, fontSize:11, fontWeight:700 }}>{label}</span>;
+}
+
+function statusBadge(status) {
+  const map = {
+    online:'green', active:'green', published:'green', delivered:'green', approved:'green', success:'green', paid:'green', shipped:'blue',
+    busy:'orange', processing:'blue', pending:'yellow', draft:'yellow',
+    offline:'gray', inactive:'gray',
+    failed:'red', rejected:'red',
+  };
+  return <Badge label={status.charAt(0).toUpperCase()+status.slice(1)} color={map[status]||'gray'} />;
+}
+
+function Btn({ children, onClick, variant='primary', size='md', style:ex={} }) {
+  const base = { border:'none', borderRadius:8, fontFamily:'inherit', fontWeight:600, cursor:'pointer', transition:'all 150ms', display:'inline-flex', alignItems:'center', gap:6 };
+  const v = {
+    primary:  { background:C.saffron, color:'white' },
+    secondary:{ background:'white', color:C.navy, border:'1.5px solid #e5e7eb' },
+    danger:   { background:'#fef2f2', color:'#dc2626', border:'1.5px solid #fecaca' },
+    success:  { background:'#f0fdf4', color:'#166534', border:'1.5px solid #bbf7d0' },
+  };
+  const s = { sm:{ padding:'5px 12px', fontSize:12 }, md:{ padding:'8px 18px', fontSize:13 }, lg:{ padding:'11px 24px', fontSize:14 } };
+  return <button onClick={onClick} style={{ ...base, ...v[variant], ...s[size], ...ex }}>{children}</button>;
+}
+
+function Input({ label, value, onChange, placeholder, type='text', style:ex={} }) {
+  return (
+    <div style={{ marginBottom:16 }}>
+      {label && <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>{label}</label>}
+      <input type={type} value={value} onChange={onChange} placeholder={placeholder}
+        style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, color:'#1f2937', outline:'none', ...ex }}
+        onFocus={e => e.target.style.borderColor=C.saffron}
+        onBlur={e => e.target.style.borderColor='#e5e7eb'}
+      />
+    </div>
+  );
+}
+
+function Textarea({ label, value, onChange, placeholder, rows=4 }) {
+  return (
+    <div style={{ marginBottom:16 }}>
+      {label && <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>{label}</label>}
+      <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
+        style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, color:'#1f2937', outline:'none', resize:'vertical', fontFamily:'inherit' }}
+        onFocus={e => e.target.style.borderColor=C.saffron}
+        onBlur={e => e.target.style.borderColor='#e5e7eb'}
+      />
+    </div>
+  );
+}
+
+function Modal({ title, onClose, children, width=560 }) {
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background:'white', borderRadius:16, width:'100%', maxWidth:width, maxHeight:'90vh', overflow:'auto', boxShadow:'0 24px 64px rgba(0,0,0,0.2)', animation:'fadeIn 200ms ease' }}>
+        <div style={{ padding:'20px 24px', borderBottom:'1px solid #f3f4f6', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <div style={{ fontSize:16, fontWeight:700, color:'#1f2937' }}>{title}</div>
+          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:20, color:'#9ca3af', lineHeight:1 }}>×</button>
+        </div>
+        <div style={{ padding:24 }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, sub, icon, color='#E8890C' }) {
+  return (
+    <div style={{ background:'white', borderRadius:14, padding:'20px 24px', border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+      <div>
+        <div style={{ fontSize:12, fontWeight:600, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:8 }}>{label}</div>
+        <div style={{ fontSize:28, fontWeight:800, color:'#111827', lineHeight:1 }}>{value}</div>
+        {sub && <div style={{ fontSize:11, color:'#22c55e', marginTop:6, fontWeight:600 }}>{sub}</div>}
+      </div>
+      <div style={{ width:44, height:44, borderRadius:12, background:`${color}18`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>{icon}</div>
+    </div>
+  );
+}
+
+function SearchBar({ value, onChange, placeholder='Search...' }) {
+  return (
+    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      style={{ padding:'8px 14px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, color:'#374151', outline:'none', minWidth:220 }}
+      onFocus={e => e.target.style.borderColor=C.saffron}
+      onBlur={e => e.target.style.borderColor='#e5e7eb'}
+    />
+  );
+}
+
+function THead({ cols }) {
+  return (
+    <thead>
+      <tr style={{ background:'#f9fafb' }}>
+        {cols.map(c => <th key={c} style={{ padding:'10px 16px', textAlign:'left', fontSize:11, fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:'1px solid #f0f0f0', whiteSpace:'nowrap' }}>{c}</th>)}
+      </tr>
+    </thead>
+  );
+}
+
+function TD({ children, style:ex={} }) {
+  return <td style={{ padding:'12px 16px', fontSize:13, color:'#374151', borderBottom:'1px solid #f9fafb', verticalAlign:'middle', ...ex }}>{children}</td>;
+}
+
+function PageHeader({ title, sub, action }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
+      <div>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'#111827', marginBottom:2 }}>{title}</h1>
+        {sub && <p style={{ fontSize:13, color:'#6b7280' }}>{sub}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+// ── Revenue Bar Chart ───────────────────────────────────────────
+function RevenueChart({ data }) {
+  const max = Math.max(...data.map(d => d.amount));
+  return (
+    <div style={{ background:'white', borderRadius:14, padding:24, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+      <div style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:20 }}>Revenue — Last 7 Days</div>
+      <div style={{ display:'flex', alignItems:'flex-end', gap:12, height:140 }}>
+        {data.map(d => (
+          <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+            <div style={{ fontSize:10, color:'#6b7280', fontWeight:600 }}>₹{(d.amount/1000).toFixed(0)}k</div>
+            <div style={{ width:'100%', height:`${(d.amount/max)*100}px`, background:`linear-gradient(to top,${C.saffron},#F5C842)`, borderRadius:'6px 6px 0 0', minHeight:8 }} />
+            <div style={{ fontSize:11, color:'#6b7280', fontWeight:600 }}>{d.day}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Dashboard ──────────────────────────────────────────────────
+function Dashboard() {
+  const birthdays = [
+    { name:'Priya Sharma', dob:'May 4', phone:'+91 9876543210' },
+    { name:'Ravi Kumar',   dob:'May 5', phone:'+91 9812345678' },
+    { name:'Anita Mehta',  dob:'May 7', phone:'+91 9988776655' },
+  ];
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Dashboard" sub="Welcome back! Here's what's happening today." />
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
+        <StatCard label="Total Astrologers" value="48"      sub="↑ 3 this month"  icon="🔮" color={C.navy} />
+        <StatCard label="Total Customers"   value="12,450"  sub="↑ 234 this week" icon="👥" color={C.saffron} />
+        <StatCard label="Total Vendors"     value="12"      sub="2 pending review" icon="🏪" color="#8B1A1A" />
+        <StatCard label="Total Earnings"    value="₹8.45L"  sub="↑ 12% vs last month" icon="💰" color="#2E7D32" />
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:24 }}>
+        <StatCard label="Active Users Today" value="234"   sub="↑ 18 vs yesterday" icon="🟢" color={C.info} />
+        <StatCard label="Calls Today"        value="89"    sub="↑ 12 vs yesterday" icon="📞" color="#7c3aed" />
+        <StatCard label="Pending Withdrawals" value="₹47K" sub="8 requests"        icon="🏦" color={C.warning} />
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:24 }}>
+        <RevenueChart data={REVENUE_DATA} />
+        <div style={{ background:'white', borderRadius:14, padding:24, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:16 }}>🎂 Birthday Notifications</div>
+          {birthdays.map(b => (
+            <div key={b.name} style={{ padding:'10px 0', borderBottom:'1px solid #f9fafb', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600, color:'#1f2937' }}>{b.name}</div>
+                <div style={{ fontSize:11, color:'#9ca3af' }}>{b.phone}</div>
+              </div>
+              <Badge label={b.dob} color="orange" />
+            </div>
+          ))}
+          <Btn variant="secondary" size="sm" style={{ marginTop:14, width:'100%', justifyContent:'center' }}>View All</Btn>
+        </div>
+      </div>
+      <div style={{ background:'white', borderRadius:14, padding:24, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:16 }}>Recent Registrations</div>
+        <table>
+          <THead cols={['Name','Email','Phone','Joined','Status']} />
+          <tbody>
+            {CUSTOMERS.slice(0,4).map(c => (
+              <tr key={c.id}>
+                <TD><span style={{ fontWeight:600 }}>{c.name}</span></TD>
+                <TD>{c.email}</TD>
+                <TD>{c.phone}</TD>
+                <TD>{c.joined}</TD>
+                <TD>{statusBadge(c.status)}</TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Astrologers ────────────────────────────────────────────────
+function Astrologers() {
+  const [search, setSearch] = React.useState('');
+  const [modal, setModal] = React.useState(null);
+  const [form, setForm] = React.useState({ name:'', spec:'', lang:'', status:'online' });
+  const filtered = ASTROLOGERS.filter(a => a.name.toLowerCase().includes(search.toLowerCase()) || a.spec.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Astrologers" sub={`${ASTROLOGERS.length} total pandits`} action={<Btn onClick={() => { setForm({ name:'', spec:'', lang:'', status:'online' }); setModal('add'); }}>+ Add Astrologer</Btn>} />
+      <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid #f9fafb', display:'flex', gap:12, alignItems:'center', flexWrap:'wrap' }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search astrologers..." />
+          <Btn variant="secondary" size="sm">⬇ Export CSV</Btn>
+        </div>
+        <table>
+          <THead cols={['Priority','Name','Specialization','Rating','Status','Calls','Earnings','Actions']} />
+          <tbody>
+            {filtered.map(a => (
+              <tr key={a.id}>
+                <TD><span style={{ fontWeight:700, color:'#9ca3af' }}>#{a.priority}</span></TD>
+                <TD><div style={{ fontWeight:600, color:'#111827' }}>{a.name}</div><div style={{ fontSize:11, color:'#9ca3af' }}>{a.lang}</div></TD>
+                <TD>{a.spec}</TD>
+                <TD><span style={{ color:C.gold, fontWeight:700 }}>★ {a.rating}</span></TD>
+                <TD>{statusBadge(a.status)}</TD>
+                <TD>{a.calls.toLocaleString()}</TD>
+                <TD style={{ fontWeight:700, color:'#166534' }}>₹{a.earnings.toLocaleString()}</TD>
+                <TD>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <Btn variant="secondary" size="sm" onClick={() => { setForm(a); setModal('edit'); }}>Edit</Btn>
+                    <Btn variant="danger" size="sm">Delete</Btn>
+                  </div>
+                </TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {modal && (
+        <Modal title={modal === 'add' ? 'Add Astrologer' : 'Edit Astrologer'} onClose={() => setModal(null)}>
+          <Input label="Full Name" value={form.name} onChange={e => setForm(f => ({ ...f, name:e.target.value }))} placeholder="Pt. Name" />
+          <Input label="Specialization" value={form.spec} onChange={e => setForm(f => ({ ...f, spec:e.target.value }))} placeholder="Vedic, KP, Numerology..." />
+          <Input label="Languages" value={form.lang} onChange={e => setForm(f => ({ ...f, lang:e.target.value }))} placeholder="Hindi, English..." />
+          <div style={{ marginBottom:16 }}>
+            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>Online Status</label>
+            <select value={form.status} onChange={e => setForm(f => ({ ...f, status:e.target.value }))}
+              style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13 }}>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+              <option value="busy">Busy</option>
+            </select>
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>Availability</label>
+            <div style={{ display:'flex', gap:12 }}>
+              {['Chat','Call','Video Call'].map(opt => (
+                <label key={opt} style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, cursor:'pointer' }}>
+                  <input type="checkbox" defaultChecked style={{ accentColor:C.saffron }} /> {opt}
+                </label>
+              ))}
+            </div>
+          </div>
+          <Textarea label="Bank Details" placeholder="Bank Name, Account No, IFSC Code..." rows={3} />
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <Btn variant="secondary" onClick={() => setModal(null)}>Cancel</Btn>
+            <Btn onClick={() => setModal(null)}>Save</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ── Customers ─────────────────────────────────────────────────
+function Customers() {
+  const [search, setSearch] = React.useState('');
+  const [modal, setModal] = React.useState(null);
+  const [sel, setSel] = React.useState(null);
+  const filtered = CUSTOMERS.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.email.includes(search));
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Customers" sub={`${CUSTOMERS.length} registered users`} action={<Btn variant="secondary">⬇ Export Report</Btn>} />
+      <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid #f9fafb', display:'flex', gap:12 }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search customers..." />
+        </div>
+        <table>
+          <THead cols={['Name','Email','Phone','Wallet','Total Spent','Joined','Status','Actions']} />
+          <tbody>
+            {filtered.map(c => (
+              <tr key={c.id}>
+                <TD><span style={{ fontWeight:600 }}>{c.name}</span></TD>
+                <TD>{c.email}</TD>
+                <TD>{c.phone}</TD>
+                <TD style={{ fontWeight:600, color:'#166534' }}>₹{c.wallet}</TD>
+                <TD>₹{c.spent.toLocaleString()}</TD>
+                <TD>{c.joined}</TD>
+                <TD>{statusBadge(c.status)}</TD>
+                <TD>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <Btn variant="secondary" size="sm" onClick={() => { setSel(c); setModal('view'); }}>View</Btn>
+                    <Btn variant="danger" size="sm">Delete</Btn>
+                  </div>
+                </TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {modal === 'view' && sel && (
+        <Modal title="Customer Profile" onClose={() => setModal(null)}>
+          {[['Name', sel.name],['Email', sel.email],['Phone', sel.phone],['Wallet Balance', `₹${sel.wallet}`],['Total Spent', `₹${sel.spent}`],['Joined', sel.joined],['Status', sel.status]].map(([k,v]) => (
+            <div key={k} style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #f9fafb' }}>
+              <span style={{ fontSize:13, color:'#6b7280', fontWeight:600 }}>{k}</span>
+              <span style={{ fontSize:13, color:'#111827', fontWeight:600 }}>{v}</span>
+            </div>
+          ))}
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:16 }}>
+            <Btn variant="secondary" onClick={() => setModal(null)}>Close</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ── Vendors ───────────────────────────────────────────────────
+function Vendors() {
+  const [modal, setModal] = React.useState(false);
+  const [form, setForm] = React.useState({ name:'', category:'', status:'active' });
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Vendors" sub="Manage product vendors" action={<Btn onClick={() => setModal(true)}>+ Add Vendor</Btn>} />
+      <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid #f9fafb', display:'flex', gap:12 }}>
+          <Btn variant="secondary" size="sm">⬇ Export Data</Btn>
+        </div>
+        <table>
+          <THead cols={['Vendor Name','Category','Products','Status','Total Sales','Actions']} />
+          <tbody>
+            {VENDORS.map(v => (
+              <tr key={v.id}>
+                <TD><span style={{ fontWeight:600 }}>{v.name}</span></TD>
+                <TD>{v.category}</TD>
+                <TD>{v.products}</TD>
+                <TD>{statusBadge(v.status)}</TD>
+                <TD style={{ fontWeight:600 }}>₹{v.sales.toLocaleString()}</TD>
+                <TD><div style={{ display:'flex', gap:6 }}><Btn variant="secondary" size="sm">Edit</Btn><Btn variant="danger" size="sm">Delete</Btn></div></TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {modal && (
+        <Modal title="Add Vendor" onClose={() => setModal(false)}>
+          <Input label="Vendor Name" value={form.name} onChange={e => setForm(f => ({ ...f, name:e.target.value }))} placeholder="Company name" />
+          <Input label="Category" value={form.category} onChange={e => setForm(f => ({ ...f, category:e.target.value }))} placeholder="Gemstones, Books..." />
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <Btn variant="secondary" onClick={() => setModal(false)}>Cancel</Btn>
+            <Btn onClick={() => setModal(false)}>Save</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ── Wallet Management ─────────────────────────────────────────
+function WalletManagement() {
+  const [search, setSearch] = React.useState('');
+  const filtered = TRANSACTIONS.filter(t => t.user.toLowerCase().includes(search.toLowerCase()) || t.type.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Wallet Management" sub="Track all recharges, deductions & balances" />
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
+        <StatCard label="Total Recharges"   value="₹3.2L"  sub="This month" icon="💳" color={C.saffron} />
+        <StatCard label="Total Deductions"  value="₹2.1L"  sub="Consultations" icon="📞" color="#8B1A1A" />
+        <StatCard label="Wallet Balance"    value="₹1.1L"  sub="Across users" icon="💰" color="#2E7D32" />
+        <StatCard label="Refunds Issued"    value="₹8,400" sub="12 refunds" icon="↩️" color={C.warning} />
+      </div>
+      <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid #f9fafb', display:'flex', gap:12, justifyContent:'space-between', alignItems:'center' }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'#111827' }}>Transaction History</div>
+          <div style={{ display:'flex', gap:10 }}>
+            <SearchBar value={search} onChange={setSearch} placeholder="Search transactions..." />
+            <Btn variant="secondary" size="sm">⬇ Export</Btn>
+          </div>
+        </div>
+        <table>
+          <THead cols={['Txn ID','User','Type','Amount','Date','Status']} />
+          <tbody>
+            {filtered.map(t => (
+              <tr key={t.id}>
+                <TD><span style={{ fontFamily:'monospace', fontSize:12 }}>{t.id}</span></TD>
+                <TD style={{ fontWeight:600 }}>{t.user}</TD>
+                <TD>{t.type}</TD>
+                <TD style={{ fontWeight:700, color: t.type === 'Refund' ? '#ef4444' : '#166534' }}>
+                  {t.type === 'Refund' ? '-' : '+'}₹{t.amount}
+                </TD>
+                <TD>{t.date}</TD>
+                <TD>{statusBadge(t.status)}</TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Withdrawals & Refunds ─────────────────────────────────────
+function Withdrawals() {
+  const [data, setData] = React.useState(WITHDRAWALS);
+  const approve = id => setData(d => d.map(w => w.id === id ? { ...w, status:'approved' } : w));
+  const reject  = id => setData(d => d.map(w => w.id === id ? { ...w, status:'rejected' } : w));
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Withdrawals & Refunds" sub="Manage payout requests from astrologers" />
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:24 }}>
+        <StatCard label="Pending Requests" value="2"     sub="₹47,000 total" icon="⏳" color={C.warning} />
+        <StatCard label="Approved This Month" value="8"  sub="₹1.4L paid"   icon="✅" color="#2E7D32" />
+        <StatCard label="Total Paid Out"   value="₹4.2L" sub="All time"      icon="🏦" color={C.saffron} />
+      </div>
+      <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)', marginBottom:28 }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid #f9fafb', fontSize:14, fontWeight:700, color:'#111827' }}>Withdrawal Requests</div>
+        <table>
+          <THead cols={['Request ID','Astrologer','Amount','Bank','Requested On','Status','Actions']} />
+          <tbody>
+            {data.map(w => (
+              <tr key={w.id}>
+                <TD><span style={{ fontFamily:'monospace', fontSize:12 }}>{w.id}</span></TD>
+                <TD style={{ fontWeight:600 }}>{w.astrologer}</TD>
+                <TD style={{ fontWeight:700 }}>₹{w.amount.toLocaleString()}</TD>
+                <TD><span style={{ fontFamily:'monospace', fontSize:12 }}>{w.bank}</span></TD>
+                <TD>{w.requested}</TD>
+                <TD>{statusBadge(w.status)}</TD>
+                <TD>
+                  {w.status === 'pending' ? (
+                    <div style={{ display:'flex', gap:6 }}>
+                      <Btn variant="success" size="sm" onClick={() => approve(w.id)}>Approve</Btn>
+                      <Btn variant="danger" size="sm" onClick={() => reject(w.id)}>Reject</Btn>
+                    </div>
+                  ) : <span style={{ fontSize:12, color:'#9ca3af' }}>—</span>}
+                </TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Astro Shop ────────────────────────────────────────────────
+function AstroShop() {
+  const [tab, setTab] = React.useState('products');
+  const [modal, setModal] = React.useState(false);
+  const [form, setForm] = React.useState({ name:'', category:'Gemstones', price:'', stock:'' });
+  const tabSt = active => ({ padding:'9px 20px', border:'none', borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background: active ? C.saffron : 'transparent', color: active ? 'white' : '#6b7280', transition:'all 150ms' });
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Astro Shop" sub="Manage products, categories & orders"
+        action={<Btn onClick={() => setModal(true)}>+ Add Product</Btn>} />
+      <div style={{ display:'flex', gap:4, background:'white', padding:4, borderRadius:10, width:'fit-content', border:'1px solid #e5e7eb', marginBottom:20 }}>
+        {[['products','Products'],['orders','Orders']].map(([id,label]) => (
+          <button key={id} onClick={() => setTab(id)} style={tabSt(tab===id)}>{label}</button>
+        ))}
+      </div>
+      {tab === 'products' && (
+        <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+          <table>
+            <THead cols={['Product','Category','Price','Stock','Status','Actions']} />
+            <tbody>
+              {PRODUCTS.map(p => (
+                <tr key={p.id}>
+                  <TD><div style={{ display:'flex', alignItems:'center', gap:10 }}><span style={{ fontSize:20 }}>{p.icon}</span><span style={{ fontWeight:600 }}>{p.name}</span></div></TD>
+                  <TD>{p.category}</TD>
+                  <TD style={{ fontWeight:700 }}>₹{p.price.toLocaleString()}</TD>
+                  <TD><Badge label={p.stock === 0 ? 'Out of Stock' : `${p.stock} left`} color={p.stock === 0 ? 'red' : p.stock < 5 ? 'yellow' : 'green'} /></TD>
+                  <TD>{statusBadge(p.status)}</TD>
+                  <TD><div style={{ display:'flex', gap:6 }}><Btn variant="secondary" size="sm">Edit</Btn><Btn variant="danger" size="sm">Delete</Btn></div></TD>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {tab === 'orders' && (
+        <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+          <table>
+            <THead cols={['Order ID','Customer','Product','Amount','Date','Status','Action']} />
+            <tbody>
+              {ORDERS.map(o => (
+                <tr key={o.id}>
+                  <TD><span style={{ fontFamily:'monospace', fontSize:12 }}>{o.id}</span></TD>
+                  <TD style={{ fontWeight:600 }}>{o.customer}</TD>
+                  <TD>{o.product}</TD>
+                  <TD style={{ fontWeight:700 }}>₹{o.amount.toLocaleString()}</TD>
+                  <TD>{o.date}</TD>
+                  <TD>{statusBadge(o.status)}</TD>
+                  <TD>
+                    <select defaultValue={o.status} style={{ padding:'4px 8px', border:'1px solid #e5e7eb', borderRadius:6, fontSize:12 }}>
+                      {['processing','shipped','delivered','cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </TD>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {modal && (
+        <Modal title="Add Product" onClose={() => setModal(false)}>
+          <Input label="Product Name" value={form.name} onChange={e => setForm(f => ({ ...f, name:e.target.value }))} placeholder="e.g. Yellow Sapphire" />
+          <div style={{ marginBottom:16 }}>
+            <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>Category</label>
+            <select value={form.category} onChange={e => setForm(f => ({ ...f, category:e.target.value }))}
+              style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13 }}>
+              {['Gemstones','Books','Puja Items','Yantra'].map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <Input label="Price (₹)" value={form.price} onChange={e => setForm(f => ({ ...f, price:e.target.value }))} placeholder="4999" type="number" />
+            <Input label="Stock Quantity" value={form.stock} onChange={e => setForm(f => ({ ...f, stock:e.target.value }))} placeholder="10" type="number" />
+          </div>
+          <Textarea label="Description" placeholder="Product description, benefits..." />
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <Btn variant="secondary" onClick={() => setModal(false)}>Cancel</Btn>
+            <Btn onClick={() => setModal(false)}>Save Product</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ── CMS / SEO ─────────────────────────────────────────────────
+function CMS() {
+  const [modal, setModal] = React.useState(null);
+  const [form, setForm] = React.useState({});
+  const openEdit = (page) => { setForm({ ...page, desc:'Discover your personalized Vedic astrology readings.', canonical:page.url, og_title:page.title, og_desc:'', footer_html:'' }); setModal('edit'); };
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="CMS / SEO" sub="Manage page metadata, SEO tags & footer content" />
+      <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+        <table>
+          <THead cols={['Page Name','URL','Title','Last Updated','Actions']} />
+          <tbody>
+            {CMS_PAGES.map(p => (
+              <tr key={p.id}>
+                <TD style={{ fontWeight:700 }}>{p.name}</TD>
+                <TD><span style={{ fontFamily:'monospace', fontSize:12, color:C.saffron }}>{p.url}</span></TD>
+                <TD style={{ maxWidth:280 }}><span style={{ fontSize:12, color:'#374151' }}>{p.title}</span></TD>
+                <TD style={{ fontSize:12, color:'#9ca3af' }}>{p.updated}</TD>
+                <TD><Btn variant="secondary" size="sm" onClick={() => openEdit(p)}>✏ Edit SEO</Btn></TD>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {modal === 'edit' && (
+        <Modal title={`SEO — ${form.name}`} onClose={() => setModal(null)} width={680}>
+          <Input label="Page Title (55–60 chars)" value={form.title} onChange={e => setForm(f => ({ ...f, title:e.target.value }))} />
+          <Textarea label="Meta Description (150–160 chars)" value={form.desc} onChange={e => setForm(f => ({ ...f, desc:e.target.value }))} rows={3} />
+          <Input label="Canonical URL" value={form.canonical} onChange={e => setForm(f => ({ ...f, canonical:e.target.value }))} />
+          <Input label="H1 Tag" value={form.h1} onChange={e => setForm(f => ({ ...f, h1:e.target.value }))} />
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <Input label="OG Title" value={form.og_title} onChange={e => setForm(f => ({ ...f, og_title:e.target.value }))} />
+            <Input label="OG Description" value={form.og_desc} onChange={e => setForm(f => ({ ...f, og_desc:e.target.value }))} />
+          </div>
+          <Textarea label="Footer HTML Content" value={form.footer_html} onChange={e => setForm(f => ({ ...f, footer_html:e.target.value }))} placeholder="<p>Custom footer content for SEO...</p>" rows={4} />
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <Btn variant="secondary" onClick={() => setModal(null)}>Cancel</Btn>
+            <Btn onClick={() => setModal(null)}>Save Changes</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ── Blog Management ────────────────────────────────────────────
+function Blogs() {
+  const [tab, setTab] = React.useState('posts');
+  const [modal, setModal] = React.useState(null);
+  const [form, setForm] = React.useState({ title:'', category:'Horoscope', content:'', status:'draft' });
+  const [catModal, setCatModal] = React.useState(false);
+  const [subCats, setSubCats] = React.useState({ Horoscope:['Daily', 'Weekly', 'Monthly'], Kundali:['Janam Kundali', 'Navamsa'], Numerology:['Life Path', 'Name Number'], 'Tarot Cards':['Major Arcana', 'Minor Arcana'] });
+  const [newSub, setNewSub] = React.useState('');
+  const [selCat, setSelCat] = React.useState('Horoscope');
+  const tabSt = active => ({ padding:'9px 20px', border:'none', borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background: active ? C.saffron : 'transparent', color: active ? 'white' : '#6b7280', transition:'all 150ms' });
+  return (
+    <div style={{ animation:'fadeIn 200ms ease' }}>
+      <PageHeader title="Blog Management" sub="Create, edit and manage blog content"
+        action={tab === 'posts' ? <Btn onClick={() => { setForm({ title:'', category:'Horoscope', content:'', status:'draft' }); setModal('add'); }}>+ New Blog Post</Btn> : <Btn onClick={() => setCatModal(true)}>+ Add Subcategory</Btn>} />
+      <div style={{ display:'flex', gap:4, background:'white', padding:4, borderRadius:10, width:'fit-content', border:'1px solid #e5e7eb', marginBottom:20 }}>
+        {[['posts','Blog Posts'],['categories','Categories']].map(([id,label]) => (
+          <button key={id} onClick={() => setTab(id)} style={tabSt(tab===id)}>{label}</button>
+        ))}
+      </div>
+      {tab === 'posts' && (
+        <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+          <table>
+            <THead cols={['Title','Category','Author','Status','Date','Actions']} />
+            <tbody>
+              {BLOGS.map(b => (
+                <tr key={b.id}>
+                  <TD style={{ maxWidth:280 }}><span style={{ fontWeight:600 }}>{b.title}</span></TD>
+                  <TD><Badge label={b.category} color="blue" /></TD>
+                  <TD>{b.author}</TD>
+                  <TD>{statusBadge(b.status)}</TD>
+                  <TD style={{ fontSize:12, color:'#9ca3af' }}>{b.date}</TD>
+                  <TD><div style={{ display:'flex', gap:6 }}>
+                    <Btn variant="secondary" size="sm" onClick={() => { setForm({ ...b, content:'Write your blog content here...' }); setModal('edit'); }}>Edit</Btn>
+                    <Btn variant="danger" size="sm">Delete</Btn>
+                  </div></TD>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {tab === 'categories' && (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16 }}>
+          {BLOG_CATEGORIES.map(cat => (
+            <div key={cat} style={{ background:'white', borderRadius:14, padding:24, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontSize:15, fontWeight:700, color:'#111827', marginBottom:14, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                {cat}
+                <Btn variant="secondary" size="sm" onClick={() => { setSelCat(cat); setCatModal(true); }}>+ Sub</Btn>
+              </div>
+              {(subCats[cat] || []).map(sub => (
+                <div key={sub} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px', background:'#f9fafb', borderRadius:8, marginBottom:6 }}>
+                  <span style={{ fontSize:13, color:'#374151' }}>— {sub}</span>
+                  <button onClick={() => setSubCats(s => ({ ...s, [cat]: s[cat].filter(x => x !== sub) }))}
+                    style={{ background:'none', border:'none', cursor:'pointer', color:'#ef4444', fontSize:16, lineHeight:1 }}>×</button>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      {catModal && (
+        <Modal title={`Add Subcategory — ${selCat}`} onClose={() => { setCatModal(false); setNewSub(''); }}>
+          <Input label="Subcategory Name" value={newSub} onChange={e => setNewSub(e.target.value)} placeholder="e.g. Weekly Horoscope" />
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <Btn variant="secondary" onClick={() => { setCatModal(false); setNewSub(''); }}>Cancel</Btn>
+            <Btn onClick={() => { if (newSub.trim()) { setSubCats(s => ({ ...s, [selCat]: [...(s[selCat]||[]), newSub.trim()] })); } setCatModal(false); setNewSub(''); }}>Add</Btn>
+          </div>
+        </Modal>
+      )}
+      {modal && (
+        <Modal title={modal === 'add' ? 'New Blog Post' : 'Edit Blog Post'} onClose={() => setModal(null)} width={720}>
+          <Input label="Blog Title" value={form.title} onChange={e => setForm(f => ({ ...f, title:e.target.value }))} placeholder="Enter a compelling title..." />
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+            <div>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>Category</label>
+              <select value={form.category} onChange={e => setForm(f => ({ ...f, category:e.target.value }))}
+                style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13 }}>
+                {BLOG_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>Status</label>
+              <select value={form.status} onChange={e => setForm(f => ({ ...f, status:e.target.value }))}
+                style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13 }}>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+          </div>
+          <Textarea label="Content (CMS)" value={form.content} onChange={e => setForm(f => ({ ...f, content:e.target.value }))} placeholder="Write your blog content here..." rows={8} />
+          <Input label="Meta Title" placeholder="SEO title for this blog..." />
+          <Textarea label="Meta Description" placeholder="150-160 char description..." rows={2} />
+          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <Btn variant="secondary" onClick={() => setModal(null)}>Cancel</Btn>
+            <Btn onClick={() => setModal(null)}>{form.status === 'published' ? 'Publish' : 'Save Draft'}</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ── Sidebar ────────────────────────────────────────────────────
+const NAV = [
+  { id:'dashboard',   label:'Dashboard',          icon:'📊' },
+  { id:'astrologers', label:'Astrologers',         icon:'🔮', parent:'users' },
+  { id:'customers',   label:'Customers',           icon:'👥', parent:'users' },
+  { id:'vendors',     label:'Vendors',             icon:'🏪', parent:'users' },
+  { id:'wallet',      label:'Wallet Management',   icon:'💰' },
+  { id:'withdrawals', label:'Withdrawals & Refunds',icon:'🏦' },
+  { id:'shop',        label:'Astro Shop',          icon:'💎' },
+  { id:'cms',         label:'CMS / SEO',           icon:'🔍' },
+  { id:'blogs',       label:'Blog Management',     icon:'✍️' },
+];
+
+function Sidebar({ current, onNav, user, onLogout }) {
+  const [usersOpen, setUsersOpen] = React.useState(true);
+  return (
+    <div style={{ width:240, background:C.dark, minHeight:'100vh', display:'flex', flexDirection:'column', flexShrink:0, position:'sticky', top:0, height:'100vh', overflow:'auto' }}>
+      {/* Logo */}
+      <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+            <polygon points="32,6 35.5,24 50,16 40,29 56,32 40,35 50,48 35.5,40 32,58 28.5,40 14,48 24,35 8,32 24,29 14,16 28.5,24" fill="#E8890C" opacity="0.9"/>
+            <circle cx="32" cy="32" r="5" fill="#F5C842"/>
+          </svg>
+          <div>
+            <div style={{ fontSize:15, fontWeight:800, color:'white' }}>Kundalibaba</div>
+            <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', fontWeight:600, letterSpacing:'0.08em' }}>ADMIN PANEL</div>
+          </div>
+        </div>
+      </div>
+      {/* Nav */}
+      <nav style={{ flex:1, padding:'12px 8px', overflow:'auto' }}>
+        {/* Dashboard */}
+        <NavItem id="dashboard" label="Dashboard" icon="📊" current={current} onNav={onNav} />
+        {/* User Management group */}
+        <div onClick={() => setUsersOpen(o => !o)} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 14px', cursor:'pointer', borderRadius:8, marginBottom:2 }}>
+          <span style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.35)', textTransform:'uppercase', letterSpacing:'0.1em' }}>User Management</span>
+          <span style={{ color:'rgba(255,255,255,0.35)', fontSize:11 }}>{usersOpen ? '▲' : '▼'}</span>
+        </div>
+        {usersOpen && ['astrologers','customers','vendors'].map(id => {
+          const n = NAV.find(x => x.id === id);
+          return <NavItem key={id} id={id} label={n.label} icon={n.icon} current={current} onNav={onNav} indent />;
+        })}
+        <div style={{ height:1, background:'rgba(255,255,255,0.07)', margin:'8px 8px' }} />
+        {['wallet','withdrawals','shop','cms','blogs'].map(id => {
+          const n = NAV.find(x => x.id === id);
+          return <NavItem key={id} id={id} label={n.label} icon={n.icon} current={current} onNav={onNav} />;
+        })}
+      </nav>
+      {/* User */}
+      <div style={{ padding:'14px 16px', borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+          <div style={{ width:32, height:32, borderRadius:'50%', background:`${C.saffron}33`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:C.saffron, flexShrink:0 }}>
+            {(user?.name || 'A')[0].toUpperCase()}
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.9)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user?.name || 'Admin'}</div>
+            <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user?.email}</div>
+          </div>
+        </div>
+        <button onClick={onLogout} style={{ width:'100%', padding:'7px 0', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'rgba(255,255,255,0.6)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NavItem({ id, label, icon, current, onNav, indent }) {
+  const active = current === id;
+  return (
+    <div onClick={() => onNav(id)} style={{
+      display:'flex', alignItems:'center', gap:10,
+      padding: indent ? '7px 14px 7px 28px' : '8px 14px',
+      borderRadius:8, cursor:'pointer', marginBottom:2,
+      background: active ? `${C.saffron}22` : 'transparent',
+      borderLeft: active ? `3px solid ${C.saffron}` : '3px solid transparent',
+      transition:'all 150ms',
+    }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background='rgba(255,255,255,0.05)'; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background='transparent'; }}
+    >
+      <span style={{ fontSize:15 }}>{icon}</span>
+      <span style={{ fontSize:13, fontWeight: active ? 700 : 500, color: active ? C.saffron : 'rgba(255,255,255,0.65)', whiteSpace:'nowrap' }}>{label}</span>
+    </div>
+  );
+}
+
+// ── Login Page ─────────────────────────────────────────────────
+function AdminLogin({ onLogin }) {
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [status, setStatus] = React.useState('loading');
+  const containerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    window.__adminGoogleCb = async (response) => {
+      setLoading(true); setError('');
+      try {
+        const res = await KBApi.googleLogin(response.credential);
+        const user = res.data.user;
+        if (user.email !== ADMIN_EMAIL) {
+          Auth.clear();
+          setError(`Access denied. Only ${ADMIN_EMAIL} can access the admin panel.`);
+          setLoading(false);
+          return;
+        }
+        Auth.setToken(res.data.accessToken);
+        Auth.setRefresh(res.data.refreshToken);
+        Auth.setUser(user);
+        onLogin(user);
+      } catch(e) {
+        setError(e.message || 'Login failed. Please try again.');
+        setLoading(false);
+      }
+    };
+    let attempts = 0;
+    const tryRender = () => {
+      attempts++;
+      if (containerRef.current && window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({ client_id:GOOGLE_CLIENT_ID, callback:window.__adminGoogleCb });
+          window.google.accounts.id.renderButton(containerRef.current, { theme:'outline', size:'large', text:'signin_with', shape:'rectangular', width:320 });
+          setStatus('ready');
+        } catch { setStatus('error'); setError('Google Sign-In failed to load.'); }
+      } else if (attempts < 40) {
+        setTimeout(tryRender, 250);
+      } else {
+        setStatus('error'); setError('Google Sign-In could not load. Please refresh.');
+      }
+    };
+    const t = setTimeout(tryRender, 400);
+    return () => { clearTimeout(t); delete window.__adminGoogleCb; };
+  }, []);
+
+  return (
+    <div style={{ minHeight:'100vh', background:'linear-gradient(135deg,#060D20,#0D1B3E)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div style={{ background:'white', borderRadius:24, padding:48, width:'100%', maxWidth:420, boxShadow:'0 32px 80px rgba(0,0,0,0.3)', textAlign:'center' }}>
+        <div style={{ marginBottom:32 }}>
+          <div style={{ width:64, height:64, borderRadius:16, background:'rgba(232,137,12,0.12)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, margin:'0 auto 16px' }}>🔐</div>
+          <h1 style={{ fontSize:24, fontWeight:800, color:'#111827', marginBottom:6 }}>Admin Panel</h1>
+          <p style={{ fontSize:13, color:'#6b7280' }}>KundaliBaba — Restricted Access</p>
+        </div>
+        {loading && <div style={{ fontSize:14, color:C.saffron, marginBottom:16 }}>⏳ Verifying access...</div>}
+        {error && <div style={{ fontSize:13, color:'#dc2626', background:'#fef2f2', border:'1px solid #fecaca', padding:'10px 14px', borderRadius:10, marginBottom:16 }}>{error}</div>}
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
+          <div ref={containerRef} style={{ width:320, minHeight:44 }}>
+            {status === 'loading' && <div style={{ width:320, height:44, border:'1px solid #e5e7eb', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:'#9ca3af' }}>Loading Google Sign-In...</div>}
+          </div>
+        </div>
+        <p style={{ fontSize:11, color:'#9ca3af' }}>Only authorized admin accounts can access this panel.</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ────────────────────────────────────────────────────
+function AdminApp() {
+  const stored = Auth.getUser();
+  const isAdmin = stored?.email === ADMIN_EMAIL;
+  const [user, setUser] = React.useState(isAdmin ? stored : null);
+  const [section, setSection] = React.useState('dashboard');
+
+  const handleLogout = async () => {
+    try { await KBApi.logout(Auth.getRefresh()); } catch {}
+    Auth.clear();
+    setUser(null);
+  };
+
+  if (!user) return <AdminLogin onLogin={setUser} />;
+
+  const PAGES = { dashboard:<Dashboard />, astrologers:<Astrologers />, customers:<Customers />, vendors:<Vendors />, wallet:<WalletManagement />, withdrawals:<Withdrawals />, shop:<AstroShop />, cms:<CMS />, blogs:<Blogs /> };
+
+  return (
+    <div style={{ display:'flex', minHeight:'100vh' }}>
+      <Sidebar current={section} onNav={setSection} user={user} onLogout={handleLogout} />
+      <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
+        {/* Top bar */}
+        <div style={{ background:'white', borderBottom:'1px solid #f0f0f0', padding:'14px 28px', display:'flex', justifyContent:'space-between', alignItems:'center', position:'sticky', top:0, zIndex:100 }}>
+          <div style={{ fontSize:13, color:'#6b7280' }}>
+            <span style={{ color:C.saffron, fontWeight:600 }}>Admin</span> / {NAV.find(n => n.id === section)?.label || section}
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+            <a href="/" target="_blank" style={{ fontSize:12, color:C.saffron, fontWeight:600, textDecoration:'none' }}>↗ View Site</a>
+            <div style={{ fontSize:12, color:'#6b7280' }}>👤 {user.name || user.email}</div>
+          </div>
+        </div>
+        {/* Content */}
+        <div style={{ flex:1, padding:28, overflow:'auto' }}>
+          {PAGES[section] || <Dashboard />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<AdminApp />);
+  </script>
+</body>
+</html>
