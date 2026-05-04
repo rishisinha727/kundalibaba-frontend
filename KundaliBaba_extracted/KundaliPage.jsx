@@ -2,6 +2,77 @@
 // KundaliBaba — KundaliPage (Free Kundali + Matching)
 // ============================================================
 
+function CityAutocomplete({ value, onChange, placeholder, inputStyle, onFocus, onBlur }) {
+  const [query, setQuery] = React.useState(value || '');
+  const [suggestions, setSuggestions] = React.useState([]);
+  const [open, setOpen] = React.useState(false);
+  const timerRef = React.useRef(null);
+  const wrapRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const fn = e => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, []);
+
+  const search = q => {
+    clearTimeout(timerRef.current);
+    if (q.length < 2) { setSuggestions([]); setOpen(false); return; }
+    timerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=7&addressdetails=1`);
+        const data = await res.json();
+        const seen = new Set();
+        const cities = data
+          .map(d => {
+            const a = d.address;
+            const city = a.city || a.town || a.village || a.county || d.display_name.split(',')[0];
+            const state = a.state || '';
+            const country = a.country || '';
+            return [city, state, country].filter(Boolean).join(', ');
+          })
+          .filter(label => { if (seen.has(label)) return false; seen.add(label); return true; })
+          .slice(0, 5);
+        setSuggestions(cities);
+        setOpen(cities.length > 0);
+      } catch {}
+    }, 300);
+  };
+
+  const select = label => {
+    setQuery(label);
+    onChange(label);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={wrapRef} style={{ position:'relative' }}>
+      <input
+        style={inputStyle}
+        placeholder={placeholder}
+        value={query}
+        autoComplete="off"
+        onChange={e => { setQuery(e.target.value); onChange(e.target.value); search(e.target.value); }}
+        onFocus={e => { onFocus && onFocus(e); if (suggestions.length > 0) setOpen(true); }}
+        onBlur={onBlur}
+      />
+      {open && (
+        <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'white', border:'1.5px solid #EDD9B8', borderTop:'none', borderRadius:'0 0 10px 10px', zIndex:200, boxShadow:'0 10px 28px rgba(13,27,62,0.13)', overflow:'hidden' }}>
+          {suggestions.map((label, i) => (
+            <div key={i} onMouseDown={() => select(label)}
+              style={{ padding:'10px 14px', fontSize:13, color:'#1A0A00', cursor:'pointer', display:'flex', alignItems:'center', gap:8, borderBottom: i < suggestions.length - 1 ? '1px solid #F5EDE0' : 'none', background:'white', transition:'background 100ms' }}
+              onMouseEnter={e => e.currentTarget.style.background='#FFF9F0'}
+              onMouseLeave={e => e.currentTarget.style.background='white'}
+            >
+              <span style={{ fontSize:14 }}>📍</span> {label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
   const [subPage, setSubPage] = React.useState(initialSubPage || 'kundali'); // 'kundali' | 'matching'
   const [step, setStep] = React.useState('form');
@@ -124,7 +195,7 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
               </div>
               <div>
                 <label style={labelSt}>Birth Place</label>
-                <input style={inputBase} placeholder="e.g. New Delhi, India" value={form.place} onChange={e => update('place', e.target.value)} onFocus={focusIn} onBlur={focusOut} />
+                <CityAutocomplete inputStyle={inputBase} placeholder="e.g. New Delhi, India" value={form.place} onChange={v => update('place', v)} onFocus={focusIn} onBlur={focusOut} />
               </div>
               <div>
                 <label style={labelSt}>Gender</label>
@@ -445,7 +516,7 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
                 </div>
                 <div>
                   <label style={labelSt}>Birth Place</label>
-                  <input style={inputBase} placeholder="City, State" value={data.place} onChange={e => setData(d => ({ ...d, place:e.target.value }))} onFocus={focusIn} onBlur={focusOut} />
+                  <CityAutocomplete inputStyle={inputBase} placeholder="City, State" value={data.place} onChange={v => setData(d => ({ ...d, place:v }))} onFocus={focusIn} onBlur={focusOut} />
                 </div>
               </div>
             </div>
