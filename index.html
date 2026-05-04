@@ -69,7 +69,7 @@
 
   <!-- Design system: tweaks panel, shared components, pages -->
   <script type="text/babel" src="KundaliBaba_extracted/tweaks-panel.jsx?v=11"></script>
-  <script type="text/babel" src="KundaliBaba_extracted/Components.jsx?v=13"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/Components.jsx?v=14"></script>
   <script type="text/babel">
 // ============================================================
 // KundaliBaba — Auth Modal (Google Login) — inlined to bypass CDN cache
@@ -152,6 +152,7 @@ Object.assign(window, { AuthModal });
   <script type="text/babel" src="KundaliBaba_extracted/ShopPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/HoroscopePage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/CalculatorsPage.jsx?v=1"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/BlogPage.jsx?v=1"></script>
 
   <!-- App shell -->
   <script type="text/babel">
@@ -267,12 +268,23 @@ Object.assign(window, { AuthModal });
         setUser(null);
       };
 
-      const isKundali = page === 'kundali' || page === 'matching';
-      const hideFooter = page === 'chat';
+      const isKundali   = page === 'kundali' || page === 'matching';
+      const hideFooter  = page === 'chat';
       const isHoroscope = page.startsWith('horoscope');
-      const isCalc = isCalcSlug(page);
-      const isKnownPage = ['home','kundali','matching','chat','shop'].includes(page) || isHoroscope || isCalc;
+      const isCalc      = isCalcSlug(page);
+      const isBlog      = page === 'articles' || page.startsWith('articles/');
+      const isKnownPage = ['home','kundali','matching','chat','shop'].includes(page) || isHoroscope || isCalc || isBlog;
       const isCustomPage = !isKnownPage && page !== 'home';
+
+      // Derive slider context from current page
+      function sliderContext() {
+        if (isBlog) return null; // BlogPage handles its own slider
+        if (isHoroscope) return { category: 'horoscope' };
+        if (isCalc && page !== 'astrology-calculators') return { category: 'astro-calculators', tag: page };
+        if (page === 'kundali' || page === 'matching') return { category: 'kundali' };
+        return {}; // home & others: latest articles
+      }
+      const sliderCtx = sliderContext();
 
       return (
         <div>
@@ -284,9 +296,13 @@ Object.assign(window, { AuthModal });
           {page === 'shop'  && <ShopPage    onNavigate={onNavigate} />}
           {isHoroscope      && <HoroscopePage path={page} onNavigate={onNavigate} />}
           {isCalc           && <CalculatorsPage path={page} onNavigate={onNavigate} />}
+          {isBlog           && <BlogPage path={page} onNavigate={onNavigate} />}
           {isCustomPage     && <CustomPageView slug={page} onNavigate={onNavigate} />}
 
           {!hideFooter && <KBFooter onNavigate={onNavigate} />}
+          {!hideFooter && sliderCtx !== null && typeof ArticlesSlider !== 'undefined' && (
+            <ArticlesSlider context={sliderCtx} onNavigate={onNavigate} />
+          )}
 
           {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={u => setUser(u)} />}
 

@@ -109,7 +109,16 @@ const CMS_PAGES = [
   { id:5, name:'Gemstone Shop',    url:'/shop',                    title:'Buy Certified Gemstones — Ratna Shop',     h1:'Ratna & Gemstone Shop',      updated:'2026-05-01' },
 ];
 
-const BLOG_CATEGORIES = ['Horoscope','Kundali','Numerology','Tarot Cards'];
+const BLOG_CATEGORIES = [
+  { id:'vedic-astrology',   label:'Vedic Astrology',    subs:['Birth Chart','Nakshatra','Dasha','Yogas','Doshas'] },
+  { id:'horoscope',         label:'Horoscope',          subs:['Daily','Weekly','Monthly','Rashi Predictions'] },
+  { id:'numerology',        label:'Numerology',         subs:['Life Path','Name Number','Lucky Numbers','Lo Shu Grid'] },
+  { id:'kundali',           label:'Kundali',            subs:['Janam Kundali','Navamsa','Matching','Lagna'] },
+  { id:'planets-transits',  label:'Planets & Transits', subs:['Saturn Transit','Jupiter Transit','Rahu Ketu','Retrograde'] },
+  { id:'remedies-rituals',  label:'Remedies & Rituals', subs:['Gemstones','Mantras','Fasting','Puja'] },
+  { id:'astro-calculators', label:'Astro Calculators',  subs:['Moon Sign','Nakshatra','Mangal Dosha','Sade Sati'] },
+  { id:'love-marriage',     label:'Love & Marriage',    subs:['Kundali Matching','Love Compatibility','Manglik','Marriage Muhurta'] },
+];
 const BLOGS = [
   { id:1, title:'Mercury Retrograde 2026 — What It Means for You',  category:'Horoscope', author:'Acharya Vikram', status:'published', date:'2026-05-01' },
   { id:2, title:'How to Read Your Janam Kundali',                    category:'Kundali',   author:'Pt. Rajesh',    status:'published', date:'2026-04-28' },
@@ -1160,7 +1169,7 @@ function Blogs() {
   const [tab, setTab] = React.useState('posts');
   const [posts, setPosts] = React.useState(BLOGS);
   const [modal, setModal] = React.useState(null);
-  const emptyForm = { title:'', slug:'', category:'Horoscope', author:'', status:'draft', content:'', featuredImg:'', tags:'', metaTitle:'', metaDesc:'', excerpt:'' };
+  const emptyForm = { title:'', slug:'', category:'vedic-astrology', subCategory:'', author:'', status:'draft', content:'', featuredImg:'', tags:'', metaTitle:'', metaDesc:'', excerpt:'' };
   const [form, setForm] = React.useState(emptyForm);
   const [editorKey, setEditorKey] = React.useState(0);
   const [preview, setPreview] = React.useState(false);
@@ -1184,14 +1193,30 @@ function Blogs() {
     setEditorKey(k => k+1); setModal('edit');
   };
   const deletePost = id => setPosts(p => p.filter(x => x.id !== id));
-  const savePost = () => {
+  const savePost = async () => {
     const tagArr = form.tags ? form.tags.split(',').map(t=>t.trim()).filter(Boolean) : [];
-    if (modal === 'add') {
-      setPosts(p => [...p, { ...form, id: Date.now(), tags: tagArr, date: new Date().toISOString().slice(0,10) }]);
-    } else {
-      setPosts(p => p.map(x => x.id === form.id ? { ...form, tags: tagArr } : x));
-    }
-    setModal(null);
+    const payload = {
+      title: form.title, slug: form.slug, excerpt: form.excerpt,
+      content: form.content, coverImage: form.featuredImg,
+      tags: tagArr, category: form.category, subCategory: form.subCategory,
+      isPublished: form.status === 'published',
+      metaTitle: form.metaTitle, metaDesc: form.metaDesc,
+    };
+    try {
+      const token = Auth.getToken();
+      if (modal === 'add') {
+        const r = await fetch(`${API}/content/blogs`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify(payload) });
+        const d = await r.json();
+        if (r.ok) { setPosts(p => [{ ...d.data, id: d.data._id, date: new Date().toISOString().slice(0,10), author: form.author }, ...p]); }
+        else alert(d.message || 'Failed to create blog');
+      } else {
+        const r = await fetch(`${API}/content/blogs/${form.slug}`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify(payload) });
+        const d = await r.json();
+        if (r.ok) { setPosts(p => p.map(x => (x.slug === form.slug || x.id === form.id) ? { ...x, ...d.data, id: d.data._id || x.id } : x)); }
+        else alert(d.message || 'Failed to update blog');
+      }
+      setModal(null);
+    } catch(e) { alert('Network error: ' + e.message); }
   };
 
   const filtered = posts.filter(b => !search || b.title.toLowerCase().includes(search.toLowerCase()));
@@ -1257,16 +1282,12 @@ function Blogs() {
       {tab === 'categories' && (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16 }}>
           {BLOG_CATEGORIES.map(cat => (
-            <div key={cat} style={{ background:'white', borderRadius:14, padding:24, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize:15, fontWeight:700, color:'#111827', marginBottom:14, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                {cat}
-                <Btn variant="secondary" size="sm" onClick={() => { setSelCat(cat); setCatModal(true); }}>+ Sub</Btn>
-              </div>
-              {(subCats[cat]||[]).map(sub => (
+            <div key={cat.id} style={{ background:'white', borderRadius:14, padding:24, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontSize:15, fontWeight:700, color:'#111827', marginBottom:4 }}>{cat.label}</div>
+              <div style={{ fontSize:11, color:'#9ca3af', marginBottom:12 }}>/articles?category={cat.id}</div>
+              {cat.subs.map(sub => (
                 <div key={sub} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px', background:'#f9fafb', borderRadius:8, marginBottom:6 }}>
                   <span style={{ fontSize:13, color:'#374151' }}>— {sub}</span>
-                  <button onClick={() => setSubCats(s => ({ ...s, [cat]: s[cat].filter(x => x !== sub) }))}
-                    style={{ background:'none', border:'none', cursor:'pointer', color:'#ef4444', fontSize:16, lineHeight:1 }}>×</button>
                 </div>
               ))}
             </div>
@@ -1350,9 +1371,17 @@ function Blogs() {
 
                 <div style={{ marginBottom:14 }}>
                   <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Category</label>
-                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category:e.target.value }))}
+                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category:e.target.value, subCategory:'' }))}
                     style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, background:'white' }}>
-                    {BLOG_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                    {BLOG_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  </select>
+                </div>
+                <div style={{ marginBottom:14 }}>
+                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Sub-Category</label>
+                  <select value={form.subCategory} onChange={e => setForm(f => ({ ...f, subCategory:e.target.value }))}
+                    style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, background:'white' }}>
+                    <option value="">— None —</option>
+                    {(BLOG_CATEGORIES.find(c=>c.id===form.category)?.subs||[]).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
 
@@ -1361,7 +1390,7 @@ function Blogs() {
                 <div style={{ marginBottom:14 }}>
                   <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>URL Slug</label>
                   <div style={{ display:'flex', alignItems:'center', border:'1.5px solid #e5e7eb', borderRadius:8, overflow:'hidden', background:'white' }}>
-                    <span style={{ padding:'9px 8px 9px 12px', fontSize:11, color:'#9ca3af', flexShrink:0 }}>/blog/</span>
+                    <span style={{ padding:'9px 8px 9px 12px', fontSize:11, color:'#9ca3af', flexShrink:0 }}>/articles/</span>
                     <input value={form.slug} onChange={e => setForm(f => ({ ...f, slug:slugify(e.target.value) }))}
                       placeholder="url-slug" style={{ flex:1, padding:'9px 12px 9px 0', border:'none', fontSize:12, outline:'none' }} />
                   </div>

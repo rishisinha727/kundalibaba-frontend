@@ -126,6 +126,7 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
     { id:'horoscope', label:'Horoscope' },
     { id:'kundali', label:'Free Kundali' },
     { id:'matching', label:'Kundali Match' },
+    { id:'articles', label:'Articles' },
     { id:'chat', label:'Talk to Pandit' },
     { id:'shop', label:'Shop' },
   ];
