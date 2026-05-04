@@ -145,12 +145,13 @@ function AuthModal({ onClose, onSuccess }) {
 }
 Object.assign(window, { AuthModal });
   </script>
-  <script type="text/babel" src="KundaliBaba_extracted/LandingPage.jsx?v=13"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/LandingPage.jsx?v=14"></script>
   <script type="text/babel" src="KundaliBaba_extracted/HomePage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/ChatPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/KundaliPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/ShopPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/HoroscopePage.jsx?v=12"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/CalculatorsPage.jsx?v=1"></script>
 
   <!-- App shell -->
   <script type="text/babel">
@@ -179,6 +180,13 @@ Object.assign(window, { AuthModal });
       // Handle horoscope sub-paths: horoscope/daily, horoscope/daily/aries
       if (slug.startsWith('horoscope')) return slug;
       return URL_TO_PAGE[slug] || slug || 'home';
+    }
+
+    // Calculator slug check (populated once CalculatorsPage.jsx loads)
+    function isCalcSlug(slug) {
+      if (slug === 'astrology-calculators') return true;
+      if (typeof CALC_SLUGS !== 'undefined' && CALC_SLUGS.includes(slug)) return true;
+      return false;
     }
 
     // Apply SEO meta tags from CMS
@@ -262,7 +270,8 @@ Object.assign(window, { AuthModal });
       const isKundali = page === 'kundali' || page === 'matching';
       const hideFooter = page === 'chat';
       const isHoroscope = page.startsWith('horoscope');
-      const isKnownPage = ['home','kundali','matching','chat','shop'].includes(page) || isHoroscope;
+      const isCalc = isCalcSlug(page);
+      const isKnownPage = ['home','kundali','matching','chat','shop'].includes(page) || isHoroscope || isCalc;
       const isCustomPage = !isKnownPage && page !== 'home';
 
       return (
@@ -274,6 +283,7 @@ Object.assign(window, { AuthModal });
           {page === 'chat'  && <ChatPage    onNavigate={onNavigate} tweaks={t} user={user} onShowAuth={() => setShowAuth(true)} />}
           {page === 'shop'  && <ShopPage    onNavigate={onNavigate} />}
           {isHoroscope      && <HoroscopePage path={page} onNavigate={onNavigate} />}
+          {isCalc           && <CalculatorsPage path={page} onNavigate={onNavigate} />}
           {isCustomPage     && <CustomPageView slug={page} onNavigate={onNavigate} />}
 
           {!hideFooter && <KBFooter onNavigate={onNavigate} />}

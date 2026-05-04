@@ -213,6 +213,32 @@ function LandingPage({ onNavigate }) {
         </div>
       </section>
 
+      {/* ── ASTROLOGY CALCULATORS ── */}
+      <section style={{ padding: isMobile ? '48px 0' : '72px 0', background:'linear-gradient(135deg,#FDF6EC,#FFF9F0)', borderBottom:'1px solid #EDD9B8' }}>
+        <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 16px' }}>
+          <div style={{ textAlign:'center', marginBottom: isMobile ? 28 : 44 }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#E8890C', marginBottom:10 }}>✦ 20 Free Tools · No Login Required</div>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 26 : 38, fontWeight:800, color:'#0D1B3E', margin:'0 0 10px', lineHeight:1.15 }}>Free Astrology Calculators</h2>
+            <p style={{ fontSize: isMobile ? 13 : 15, color:'#6B4C2A', margin:'0 auto', maxWidth:520, lineHeight:1.7 }}>Love compatibility, numerology, birth charts, doshas, dashas — all free, instant, and based on Vedic astrology.</p>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(5,1fr)', gap: isMobile ? 10 : 14, marginBottom: isMobile ? 28 : 36 }}>
+            {(typeof CALC_META !== 'undefined' ? CALC_META.slice(0,10) : []).map(calc => (
+              <div key={calc.slug} onClick={() => onNavigate(calc.slug)}
+                style={{ background:'white', borderRadius:14, padding: isMobile ? '16px 12px' : '20px 16px', border:'1px solid #EDD9B8', cursor:'pointer', textAlign:'center', transition:'all 160ms', boxShadow:'0 2px 8px rgba(13,27,62,0.05)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='#E8890C'; e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(13,27,62,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='#EDD9B8'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 8px rgba(13,27,62,0.05)'; }}
+              >
+                <div style={{ fontSize: isMobile ? 28 : 34, marginBottom:8 }}>{calc.icon}</div>
+                <div style={{ fontSize: isMobile ? 11 : 12, fontWeight:700, color:'#0D1B3E', lineHeight:1.3 }}>{calc.title}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign:'center' }}>
+            <KBButton variant="primary" onClick={() => onNavigate('astrology-calculators')}>View All 20 Calculators →</KBButton>
+          </div>
+        </div>
+      </section>
+
       {/* ── PAIN POINTS ── */}
       <section style={{ padding: sectionPad, background:'#FFF9F0' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
