@@ -147,11 +147,25 @@ Object.assign(window, { AuthModal });
   <script type="text/babel">
     const TWEAK_DEFAULTS = { "heroSize": 54, "darkNav": false };
 
-    const VALID_PAGES = ['home','kundali','matching','chat','shop'];
+    const PAGE_TO_URL = {
+      home:     '/',
+      kundali:  '/free-kundali-online',
+      matching: '/kundali-matching-online',
+      chat:     '/chat-with-astrologer',
+      shop:     '/shop',
+    };
+
+    const URL_TO_PAGE = {
+      '':                        'home',
+      'free-kundali-online':     'kundali',
+      'kundali-matching-online': 'matching',
+      'chat-with-astrologer':    'chat',
+      'shop':                    'shop',
+    };
 
     function getPageFromURL() {
-      const path = window.location.pathname.replace(/^\//, '').replace(/\/$/, '') || 'home';
-      return VALID_PAGES.includes(path) ? path : 'home';
+      const slug = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
+      return URL_TO_PAGE[slug] || 'home';
     }
 
     function App() {
@@ -160,7 +174,6 @@ Object.assign(window, { AuthModal });
       const [user, setUser] = React.useState(Auth.getUser());
       const [showAuth, setShowAuth] = React.useState(false);
 
-      // Sync URL → page on back/forward
       React.useEffect(() => {
         const fn = () => setPage(getPageFromURL());
         window.addEventListener('popstate', fn);
@@ -169,8 +182,7 @@ Object.assign(window, { AuthModal });
 
       const onNavigate = (pg) => {
         setPage(pg);
-        const url = pg === 'home' ? '/' : `/${pg}`;
-        window.history.pushState({}, '', url);
+        window.history.pushState({}, '', PAGE_TO_URL[pg] || '/');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
 
