@@ -1,14 +1,12 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
   "name": "kundalibaba",
-  "compatibility_date": "2026-05-04",
+  "compatibility_date": "2025-01-01",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "."
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
+    "directory": ".",
+    "not_found_handling": "single-page-application"
+  }
 }
