@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KundaliBaba — Admin Panel</title>
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fb; -webkit-font-smoothing: antialiased; }
@@ -15,11 +16,18 @@
     table { border-collapse: collapse; width: 100%; }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .ql-container { font-family: inherit; font-size: 14px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+    .ql-toolbar { border-top-left-radius: 8px; border-top-right-radius: 8px; background: #f9fafb; border-color: #e5e7eb !important; }
+    .ql-container { border-color: #e5e7eb !important; min-height: 280px; }
+    .ql-editor { min-height: 280px; line-height: 1.7; }
+    .ql-editor.ql-blank::before { color: #9ca3af; font-style: normal; }
+    .tag-chip { display:inline-flex; align-items:center; gap:4px; background:#f0f4ff; border:1px solid #c7d7ff; color:#3b5bdb; borderRadius:999px; padding:3px 10px; fontSize:12px; fontWeight:500; }
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -695,47 +703,137 @@ function CMS() {
   );
 }
 
+// ── Rich Text Editor (Quill) ────────────────────────────────────
+function RichEditor({ value, onChange, placeholder }) {
+  const editorRef = React.useRef(null);
+  const quillRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!editorRef.current || quillRef.current) return;
+    quillRef.current = new Quill(editorRef.current, {
+      theme: 'snow',
+      placeholder: placeholder || 'Write your blog content here...',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ color: [] }, { background: [] }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ indent: '-1' }, { indent: '+1' }],
+          ['blockquote', 'code-block'],
+          ['link', 'image'],
+          ['clean'],
+        ],
+      },
+    });
+    if (value) quillRef.current.root.innerHTML = value;
+    quillRef.current.on('text-change', () => {
+      onChange && onChange(quillRef.current.root.innerHTML);
+    });
+  }, []);
+
+  return <div ref={editorRef} />;
+}
+
 // ── Blog Management ────────────────────────────────────────────
 function Blogs() {
   const [tab, setTab] = React.useState('posts');
+  const [posts, setPosts] = React.useState(BLOGS);
   const [modal, setModal] = React.useState(null);
-  const [form, setForm] = React.useState({ title:'', category:'Horoscope', content:'', status:'draft' });
+  const emptyForm = { title:'', slug:'', category:'Horoscope', author:'', status:'draft', content:'', featuredImg:'', tags:'', metaTitle:'', metaDesc:'', excerpt:'' };
+  const [form, setForm] = React.useState(emptyForm);
+  const [editorKey, setEditorKey] = React.useState(0);
+  const [preview, setPreview] = React.useState(false);
   const [catModal, setCatModal] = React.useState(false);
-  const [subCats, setSubCats] = React.useState({ Horoscope:['Daily', 'Weekly', 'Monthly'], Kundali:['Janam Kundali', 'Navamsa'], Numerology:['Life Path', 'Name Number'], 'Tarot Cards':['Major Arcana', 'Minor Arcana'] });
+  const [subCats, setSubCats] = React.useState({ Horoscope:['Daily','Weekly','Monthly'], Kundali:['Janam Kundali','Navamsa'], Numerology:['Life Path','Name Number'], 'Tarot Cards':['Major Arcana','Minor Arcana'] });
   const [newSub, setNewSub] = React.useState('');
   const [selCat, setSelCat] = React.useState('Horoscope');
+  const [search, setSearch] = React.useState('');
+  const [tagInput, setTagInput] = React.useState('');
+
   const tabSt = active => ({ padding:'9px 20px', border:'none', borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background: active ? C.saffron : 'transparent', color: active ? 'white' : '#6b7280', transition:'all 150ms' });
+
+  const slugify = t => t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+
+  const openNew = () => {
+    setForm(emptyForm); setPreview(false);
+    setEditorKey(k => k+1); setModal('add');
+  };
+  const openEdit = (b) => {
+    setForm({ ...emptyForm, ...b, tags: (b.tags||[]).join(', ') }); setPreview(false);
+    setEditorKey(k => k+1); setModal('edit');
+  };
+  const deletePost = id => setPosts(p => p.filter(x => x.id !== id));
+  const savePost = () => {
+    const tagArr = form.tags ? form.tags.split(',').map(t=>t.trim()).filter(Boolean) : [];
+    if (modal === 'add') {
+      setPosts(p => [...p, { ...form, id: Date.now(), tags: tagArr, date: new Date().toISOString().slice(0,10) }]);
+    } else {
+      setPosts(p => p.map(x => x.id === form.id ? { ...form, tags: tagArr } : x));
+    }
+    setModal(null);
+  };
+
+  const filtered = posts.filter(b => !search || b.title.toLowerCase().includes(search.toLowerCase()));
+  const charCount = form.metaDesc.length;
+
+  const fld = (label, key, props={}) => (
+    <div style={{ marginBottom:14 }}>
+      <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>{label}</label>
+      <input value={form[key]||''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+        style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none', ...props.style }}
+        {...props} />
+    </div>
+  );
+
   return (
     <div style={{ animation:'fadeIn 200ms ease' }}>
       <PageHeader title="Blog Management" sub="Create, edit and manage blog content"
-        action={tab === 'posts' ? <Btn onClick={() => { setForm({ title:'', category:'Horoscope', content:'', status:'draft' }); setModal('add'); }}>+ New Blog Post</Btn> : <Btn onClick={() => setCatModal(true)}>+ Add Subcategory</Btn>} />
+        action={tab === 'posts'
+          ? <Btn onClick={openNew}>+ New Blog Post</Btn>
+          : <Btn onClick={() => setCatModal(true)}>+ Add Subcategory</Btn>} />
+
       <div style={{ display:'flex', gap:4, background:'white', padding:4, borderRadius:10, width:'fit-content', border:'1px solid #e5e7eb', marginBottom:20 }}>
         {[['posts','Blog Posts'],['categories','Categories']].map(([id,label]) => (
           <button key={id} onClick={() => setTab(id)} style={tabSt(tab===id)}>{label}</button>
         ))}
       </div>
+
       {tab === 'posts' && (
-        <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
-          <table>
-            <THead cols={['Title','Category','Author','Status','Date','Actions']} />
-            <tbody>
-              {BLOGS.map(b => (
-                <tr key={b.id}>
-                  <TD style={{ maxWidth:280 }}><span style={{ fontWeight:600 }}>{b.title}</span></TD>
-                  <TD><Badge label={b.category} color="blue" /></TD>
-                  <TD>{b.author}</TD>
-                  <TD>{statusBadge(b.status)}</TD>
-                  <TD style={{ fontSize:12, color:'#9ca3af' }}>{b.date}</TD>
-                  <TD><div style={{ display:'flex', gap:6 }}>
-                    <Btn variant="secondary" size="sm" onClick={() => { setForm({ ...b, content:'Write your blog content here...' }); setModal('edit'); }}>Edit</Btn>
-                    <Btn variant="danger" size="sm">Delete</Btn>
-                  </div></TD>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div style={{ marginBottom:14 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍  Search posts..."
+              style={{ padding:'9px 14px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, width:280, outline:'none' }} />
+          </div>
+          <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+            <table>
+              <THead cols={['Title','Category','Author','Status','Date','Actions']} />
+              <tbody>
+                {filtered.map(b => (
+                  <tr key={b.id}>
+                    <TD style={{ maxWidth:280 }}>
+                      <div style={{ fontWeight:600, fontSize:13 }}>{b.title}</div>
+                      {b.slug && <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>/blog/{b.slug}</div>}
+                    </TD>
+                    <TD><Badge label={b.category} color="blue" /></TD>
+                    <TD style={{ fontSize:13 }}>{b.author}</TD>
+                    <TD>{statusBadge(b.status)}</TD>
+                    <TD style={{ fontSize:12, color:'#9ca3af' }}>{b.date}</TD>
+                    <TD><div style={{ display:'flex', gap:6 }}>
+                      <Btn variant="secondary" size="sm" onClick={() => openEdit(b)}>Edit</Btn>
+                      <Btn variant="danger" size="sm" onClick={() => deletePost(b.id)}>Delete</Btn>
+                    </div></TD>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={6} style={{ textAlign:'center', padding:32, color:'#9ca3af', fontSize:13 }}>No posts found</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
+
       {tab === 'categories' && (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16 }}>
           {BLOG_CATEGORIES.map(cat => (
@@ -744,7 +842,7 @@ function Blogs() {
                 {cat}
                 <Btn variant="secondary" size="sm" onClick={() => { setSelCat(cat); setCatModal(true); }}>+ Sub</Btn>
               </div>
-              {(subCats[cat] || []).map(sub => (
+              {(subCats[cat]||[]).map(sub => (
                 <div key={sub} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px', background:'#f9fafb', borderRadius:8, marginBottom:6 }}>
                   <span style={{ fontSize:13, color:'#374151' }}>— {sub}</span>
                   <button onClick={() => setSubCats(s => ({ ...s, [cat]: s[cat].filter(x => x !== sub) }))}
@@ -755,43 +853,133 @@ function Blogs() {
           ))}
         </div>
       )}
+
       {catModal && (
         <Modal title={`Add Subcategory — ${selCat}`} onClose={() => { setCatModal(false); setNewSub(''); }}>
           <Input label="Subcategory Name" value={newSub} onChange={e => setNewSub(e.target.value)} placeholder="e.g. Weekly Horoscope" />
           <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
             <Btn variant="secondary" onClick={() => { setCatModal(false); setNewSub(''); }}>Cancel</Btn>
-            <Btn onClick={() => { if (newSub.trim()) { setSubCats(s => ({ ...s, [selCat]: [...(s[selCat]||[]), newSub.trim()] })); } setCatModal(false); setNewSub(''); }}>Add</Btn>
+            <Btn onClick={() => { if (newSub.trim()) setSubCats(s => ({ ...s, [selCat]:[...(s[selCat]||[]),newSub.trim()] })); setCatModal(false); setNewSub(''); }}>Add</Btn>
           </div>
         </Modal>
       )}
+
       {modal && (
-        <Modal title={modal === 'add' ? 'New Blog Post' : 'Edit Blog Post'} onClose={() => setModal(null)} width={720}>
-          <Input label="Blog Title" value={form.title} onChange={e => setForm(f => ({ ...f, title:e.target.value }))} placeholder="Enter a compelling title..." />
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
-            <div>
-              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>Category</label>
-              <select value={form.category} onChange={e => setForm(f => ({ ...f, category:e.target.value }))}
-                style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13 }}>
-                {BLOG_CATEGORIES.map(c => <option key={c}>{c}</option>)}
-              </select>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:200, overflowY:'auto', padding:'24px 16px' }}>
+          <div style={{ background:'white', borderRadius:16, maxWidth:960, margin:'0 auto', boxShadow:'0 24px 64px rgba(0,0,0,0.2)', overflow:'hidden' }}>
+
+            {/* Editor Header */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'18px 28px', borderBottom:'1px solid #f0f0f0', background:'#fafafa' }}>
+              <div style={{ fontSize:17, fontWeight:700, color:'#111827' }}>
+                {modal === 'add' ? '✍️ New Blog Post' : '✏️ Edit Blog Post'}
+              </div>
+              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                <button onClick={() => setPreview(p => !p)}
+                  style={{ padding:'7px 16px', borderRadius:8, border:'1.5px solid #e5e7eb', background: preview ? '#f0f4ff' : 'white', color: preview ? '#3b5bdb' : '#374151', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  {preview ? '✏️ Edit' : '👁 Preview'}
+                </button>
+                <button onClick={() => setModal(null)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'#9ca3af', lineHeight:1 }}>×</button>
+              </div>
             </div>
-            <div>
-              <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:6 }}>Status</label>
-              <select value={form.status} onChange={e => setForm(f => ({ ...f, status:e.target.value }))}
-                style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13 }}>
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-              </select>
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', minHeight:600 }}>
+              {/* Main editor area */}
+              <div style={{ padding:'24px 28px', borderRight:'1px solid #f0f0f0', overflowY:'auto' }}>
+                {preview ? (
+                  <div>
+                    {form.featuredImg && <img src={form.featuredImg} alt="" style={{ width:'100%', height:220, objectFit:'cover', borderRadius:10, marginBottom:20 }} onError={e => e.target.style.display='none'} />}
+                    <h1 style={{ fontSize:26, fontWeight:800, color:'#111827', marginBottom:8, lineHeight:1.3 }}>{form.title || 'Untitled Post'}</h1>
+                    <div style={{ fontSize:12, color:'#9ca3af', marginBottom:20 }}>{form.category} · {form.author} · {new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
+                    {form.excerpt && <p style={{ fontSize:14, color:'#6b7280', fontStyle:'italic', borderLeft:'3px solid #e8890c', paddingLeft:14, marginBottom:20 }}>{form.excerpt}</p>}
+                    <div style={{ fontSize:14, lineHeight:1.8, color:'#374151' }} dangerouslySetInnerHTML={{ __html: form.content || '<p style="color:#9ca3af">No content yet...</p>' }} />
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom:16 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Blog Title *</label>
+                      <input value={form.title} onChange={e => { const t = e.target.value; setForm(f => ({ ...f, title:t, slug: f.slug || slugify(t) })); }}
+                        placeholder="Enter a compelling blog title..."
+                        style={{ width:'100%', padding:'10px 14px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:15, fontWeight:600, outline:'none' }} />
+                    </div>
+                    <div style={{ marginBottom:16 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Excerpt / Summary</label>
+                      <textarea value={form.excerpt} onChange={e => setForm(f => ({ ...f, excerpt:e.target.value }))}
+                        placeholder="Short description shown in blog listing..." rows={2}
+                        style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, resize:'vertical', outline:'none' }} />
+                    </div>
+                    <div style={{ marginBottom:6 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Content *</label>
+                    </div>
+                    <RichEditor key={editorKey} value={form.content} onChange={v => setForm(f => ({ ...f, content:v }))} />
+                  </>
+                )}
+              </div>
+
+              {/* Right sidebar */}
+              <div style={{ padding:'24px 20px', overflowY:'auto', background:'#fafafa' }}>
+                <div style={{ fontSize:12, fontWeight:700, color:'#374151', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:14 }}>Post Settings</div>
+
+                <div style={{ marginBottom:14 }}>
+                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Status</label>
+                  <select value={form.status} onChange={e => setForm(f => ({ ...f, status:e.target.value }))}
+                    style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, background:'white' }}>
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom:14 }}>
+                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Category</label>
+                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category:e.target.value }))}
+                    style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, background:'white' }}>
+                    {BLOG_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                {fld('Author', 'author', { placeholder:'Author name...' })}
+
+                <div style={{ marginBottom:14 }}>
+                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>URL Slug</label>
+                  <div style={{ display:'flex', alignItems:'center', border:'1.5px solid #e5e7eb', borderRadius:8, overflow:'hidden', background:'white' }}>
+                    <span style={{ padding:'9px 8px 9px 12px', fontSize:11, color:'#9ca3af', flexShrink:0 }}>/blog/</span>
+                    <input value={form.slug} onChange={e => setForm(f => ({ ...f, slug:slugify(e.target.value) }))}
+                      placeholder="url-slug" style={{ flex:1, padding:'9px 12px 9px 0', border:'none', fontSize:12, outline:'none' }} />
+                  </div>
+                </div>
+
+                {fld('Featured Image URL', 'featuredImg', { placeholder:'https://...' })}
+                {form.featuredImg && <img src={form.featuredImg} alt="" style={{ width:'100%', height:100, objectFit:'cover', borderRadius:8, marginBottom:14, marginTop:-8 }} onError={e => e.target.style.display='none'} />}
+
+                <div style={{ marginBottom:14 }}>
+                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Tags</label>
+                  <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags:e.target.value }))}
+                    placeholder="vedic, kundali, jupiter..." style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:13, outline:'none' }} />
+                  <div style={{ fontSize:11, color:'#9ca3af', marginTop:4 }}>Comma separated</div>
+                </div>
+
+                <div style={{ height:1, background:'#e5e7eb', margin:'18px 0' }} />
+                <div style={{ fontSize:12, fontWeight:700, color:'#374151', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:14 }}>SEO</div>
+
+                {fld('Meta Title', 'metaTitle', { placeholder:'SEO title (50-60 chars)', maxLength:60 })}
+                <div style={{ marginBottom:14 }}>
+                  <label style={{ display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>
+                    <span>Meta Description</span>
+                    <span style={{ color: charCount > 160 ? '#ef4444' : charCount > 130 ? '#f59e0b' : '#9ca3af', fontWeight:400 }}>{charCount}/160</span>
+                  </label>
+                  <textarea value={form.metaDesc} onChange={e => setForm(f => ({ ...f, metaDesc:e.target.value }))}
+                    placeholder="150-160 char description for search engines..." rows={3} maxLength={160}
+                    style={{ width:'100%', padding:'9px 12px', border:'1.5px solid #e5e7eb', borderRadius:8, fontSize:12, resize:'none', outline:'none' }} />
+                </div>
+
+                <div style={{ height:1, background:'#e5e7eb', margin:'6px 0 18px' }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <Btn variant="secondary" onClick={() => setModal(null)} style={{ flex:1 }}>Cancel</Btn>
+                  <Btn onClick={savePost} style={{ flex:1 }}>{form.status === 'published' ? '🚀 Publish' : '💾 Save Draft'}</Btn>
+                </div>
+              </div>
             </div>
           </div>
-          <Textarea label="Content (CMS)" value={form.content} onChange={e => setForm(f => ({ ...f, content:e.target.value }))} placeholder="Write your blog content here..." rows={8} />
-          <Input label="Meta Title" placeholder="SEO title for this blog..." />
-          <Textarea label="Meta Description" placeholder="150-160 char description..." rows={2} />
-          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
-            <Btn variant="secondary" onClick={() => setModal(null)}>Cancel</Btn>
-            <Btn onClick={() => setModal(null)}>{form.status === 'published' ? 'Publish' : 'Save Draft'}</Btn>
-          </div>
-        </Modal>
+        </div>
       )}
     </div>
   );
