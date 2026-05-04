@@ -34,7 +34,7 @@
 <script src="KundaliBaba_extracted/api.js"></script>
 <script type="text/babel">
 
-const ADMIN_EMAIL = 'rishisinha727@gmail.com';
+const ADMIN_EMAILS = ['rishisinha727@gmail.com', 'alpana.rashmi43@gmail.com'];
 const GOOGLE_CLIENT_ID = '112774249048-rfnms6tnvqi4d6gcaureisbqfd2jb7de.apps.googleusercontent.com';
 const C = { saffron:'#E8890C', navy:'#0D1B3E', dark:'#1a1f36', gold:'#F5C842', success:'#22c55e', warning:'#f59e0b', error:'#ef4444', info:'#3b82f6' };
 
@@ -1086,9 +1086,9 @@ function AdminLogin({ onLogin }) {
       try {
         const res = await KBApi.googleLogin(response.credential);
         const user = res.data.user;
-        if (user.email !== ADMIN_EMAIL) {
+        if (!ADMIN_EMAILS.includes(user.email)) {
           Auth.clear();
-          setError(`Access denied. Only ${ADMIN_EMAIL} can access the admin panel.`);
+          setError(`Access denied. Your account is not authorized to access the admin panel.`);
           setLoading(false);
           return;
         }
@@ -1147,7 +1147,7 @@ function AdminLogin({ onLogin }) {
 // ── Main App ────────────────────────────────────────────────────
 function AdminApp() {
   const stored = Auth.getUser();
-  const isAdmin = stored?.email === ADMIN_EMAIL;
+  const isAdmin = ADMIN_EMAILS.includes(stored?.email);
   const [user, setUser] = React.useState(isAdmin ? stored : null);
   const [section, setSection] = React.useState('dashboard');
 
