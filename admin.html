@@ -942,10 +942,13 @@ function AdminLogin({ onLogin }) {
         </div>
         {loading && <div style={{ fontSize:14, color:C.saffron, marginBottom:16 }}>⏳ Verifying access...</div>}
         {error && <div style={{ fontSize:13, color:'#dc2626', background:'#fef2f2', border:'1px solid #fecaca', padding:'10px 14px', borderRadius:10, marginBottom:16 }}>{error}</div>}
-        <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
-          <div ref={containerRef} style={{ width:320, minHeight:44 }}>
-            {status === 'loading' && <div style={{ width:320, height:44, border:'1px solid #e5e7eb', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:'#9ca3af' }}>Loading Google Sign-In...</div>}
-          </div>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:20 }}>
+          {status === 'loading' && (
+            <div style={{ width:320, height:44, border:'1px solid #e5e7eb', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:'#9ca3af', marginBottom:0 }}>
+              Loading Google Sign-In...
+            </div>
+          )}
+          <div ref={containerRef} style={{ width:320, minHeight: status === 'loading' ? 0 : 44 }} />
         </div>
         <p style={{ fontSize:11, color:'#9ca3af' }}>Only authorized admin accounts can access this panel.</p>
       </div>
