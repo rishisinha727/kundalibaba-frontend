@@ -15,14 +15,28 @@ const Auth = {
   isLoggedIn: () => !!localStorage.getItem('kb_token'),
 };
 
-async function apiFetch(path, options = {}) {
+async function apiFetch(path, options = {}, timeoutMs = 20000) {
   const token = Auth.getToken();
   const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers };
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || 'Something went wrong');
-  return json;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal: controller.signal });
+    clearTimeout(timer);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || 'Something went wrong');
+    return json;
+  } catch (e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('Server is waking up — please try again in a few seconds.');
+    throw e;
+  }
 }
+
+// Silently wake up the backend on page load
+(function ping() {
+  fetch(`${API_BASE}/health`).catch(() => {});
+})();
 
 const KBApi = {
   // Auth
