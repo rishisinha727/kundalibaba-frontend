@@ -102,15 +102,19 @@ function serveStaticSitemap() {
   entries.push(urlEntry(`${BASE}/shop`,                      { lastmod: today(), changefreq: 'weekly',  priority: '0.7' }));
 
   // Horoscope category pages
-  entries.push(urlEntry(`${BASE}/horoscope/today`,   { lastmod: today(), changefreq: 'daily',   priority: '0.8' }));
-  entries.push(urlEntry(`${BASE}/horoscope/weekly`,  { lastmod: today(), changefreq: 'weekly',  priority: '0.8' }));
-  entries.push(urlEntry(`${BASE}/horoscope/monthly`, { lastmod: today(), changefreq: 'monthly', priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/yesterday`, { lastmod: today(), changefreq: 'daily',   priority: '0.7' }));
+  entries.push(urlEntry(`${BASE}/horoscope/today`,     { lastmod: today(), changefreq: 'daily',   priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/weekly`,    { lastmod: today(), changefreq: 'weekly',  priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/monthly`,   { lastmod: today(), changefreq: 'monthly', priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/tomorrow`,  { lastmod: today(), changefreq: 'daily',   priority: '0.7' }));
 
-  // Horoscope rashi pages — today / weekly / monthly
+  // Horoscope rashi pages — yesterday / today / weekly / monthly / tomorrow
   for (const rashi of RASHIS) {
-    entries.push(urlEntry(`${BASE}/horoscope/today/${rashi}`,   { lastmod: today(), changefreq: 'daily',   priority: '0.7' }));
-    entries.push(urlEntry(`${BASE}/horoscope/weekly/${rashi}`,  { lastmod: today(), changefreq: 'weekly',  priority: '0.6' }));
-    entries.push(urlEntry(`${BASE}/horoscope/monthly/${rashi}`, { lastmod: today(), changefreq: 'monthly', priority: '0.6' }));
+    entries.push(urlEntry(`${BASE}/horoscope/yesterday/${rashi}`, { lastmod: today(), changefreq: 'daily',   priority: '0.6' }));
+    entries.push(urlEntry(`${BASE}/horoscope/today/${rashi}`,     { lastmod: today(), changefreq: 'daily',   priority: '0.7' }));
+    entries.push(urlEntry(`${BASE}/horoscope/weekly/${rashi}`,    { lastmod: today(), changefreq: 'weekly',  priority: '0.6' }));
+    entries.push(urlEntry(`${BASE}/horoscope/monthly/${rashi}`,   { lastmod: today(), changefreq: 'monthly', priority: '0.6' }));
+    entries.push(urlEntry(`${BASE}/horoscope/tomorrow/${rashi}`,  { lastmod: today(), changefreq: 'daily',   priority: '0.6' }));
   }
 
   // Calculator pages

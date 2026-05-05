@@ -20,20 +20,32 @@ const RASHIS = [
   { slug:'pisces',      name:'Pisces',      hindi:'Meen',       symbol:'♓', element:'Water', lord:'Jupiter', dates:'Feb 19 – Mar 20', icon:'🐟', color:'#285E61' },
 ];
 
-const PERIODS = ['today', 'weekly', 'monthly'];
-const BACKEND  = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
+const PERIODS     = ['yesterday', 'today', 'weekly', 'monthly', 'tomorrow'];
+const HUB_PERIODS = ['today', 'weekly', 'monthly'];
+const BACKEND     = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
 
 // Map URL slug → API period value
-const PERIOD_API = { today: 'daily', weekly: 'weekly', monthly: 'monthly' };
+const PERIOD_API   = { yesterday: 'daily', today: 'daily', weekly: 'weekly', monthly: 'monthly', tomorrow: 'daily' };
 // Map URL slug → display label
-const PERIOD_LABEL = { today: 'Today', weekly: 'Weekly', monthly: 'Monthly' };
+const PERIOD_LABEL = { yesterday: 'Yesterday', today: 'Today', weekly: 'Weekly', monthly: 'Monthly', tomorrow: 'Tomorrow' };
+
+// Returns ISO date string offset from today
+function getDateForPeriod(period) {
+  const d = new Date();
+  if (period === 'yesterday') d.setDate(d.getDate() - 1);
+  if (period === 'tomorrow')  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
 
 function useHoroscopes(period) {
   const [data, setData] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   React.useEffect(() => {
     setLoading(true);
-    fetch(`${BACKEND}/content/horoscopes?period=${PERIOD_API[period] || period}`)
+    const apiPeriod = PERIOD_API[period] || period;
+    const date = (period === 'yesterday' || period === 'tomorrow') ? getDateForPeriod(period) : '';
+    const url = `${BACKEND}/content/horoscopes?period=${apiPeriod}${date ? `&date=${date}` : ''}`;
+    fetch(url)
       .then(r => r.json())
       .then(r => {
         const map = {};
@@ -97,7 +109,9 @@ function RashiDetailPage({ rashiSlug, period, onNavigate }) {
 
   React.useEffect(() => {
     setLoading(true);
-    fetch(`${BACKEND}/content/horoscopes/${rashiSlug}?period=${PERIOD_API[activePeriod] || activePeriod}`)
+    const apiPeriod = PERIOD_API[activePeriod] || activePeriod;
+    const date = (activePeriod === 'yesterday' || activePeriod === 'tomorrow') ? getDateForPeriod(activePeriod) : '';
+    fetch(`${BACKEND}/content/horoscopes/${rashiSlug}?period=${apiPeriod}${date ? `&date=${date}` : ''}`)
       .then(r => r.json())
       .then(r => { setHoroscope(r.data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -131,10 +145,10 @@ function RashiDetailPage({ rashiSlug, period, onNavigate }) {
             </div>
           </div>
           {/* Period tabs */}
-          <div style={{ display:'flex', gap:8 }}>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {PERIODS.map(p => (
               <button key={p} onClick={() => { setActivePeriod(p); onNavigate(`horoscope/${p}/${rashiSlug}`); }}
-                style={{ padding:'8px 20px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: activePeriod===p ? '#F5C842' : 'rgba(255,255,255,0.1)', color: activePeriod===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
+                style={{ padding:'8px 18px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: activePeriod===p ? '#F5C842' : 'rgba(255,255,255,0.1)', color: activePeriod===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
                 {PERIOD_LABEL[p] || p}
               </button>
             ))}
@@ -235,14 +249,16 @@ function HoroscopeListPage({ period, onNavigate }) {
             {PERIOD_LABEL[period] || period} Horoscope
           </h2>
           <p style={{ fontSize:14, color:'rgba(253,246,236,0.6)', margin:'0 0 28px', maxWidth:520 }}>
-            {period==='today' ? "What does today hold for your rashi? Read your personalized Vedic prediction." :
-             period==='weekly' ? "Your week ahead — love, career, health and spiritual growth by rashi." :
-             "Monthly cosmic overview for all 12 rashis — plan your month with planetary guidance."}
+            {period==='yesterday' ? "Yesterday's planetary alignments for all 12 rashis — reflect on what the stars revealed." :
+             period==='today'     ? "What does today hold for your rashi? Read your personalized Vedic prediction." :
+             period==='weekly'    ? "Your week ahead — love, career, health and spiritual growth by rashi." :
+             period==='monthly'   ? "Monthly cosmic overview for all 12 rashis — plan your month with planetary guidance." :
+             "Prepare for tomorrow's planetary alignments — know what the stars have in store."}
           </p>
-          <div style={{ display:'flex', gap:8 }}>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {PERIODS.map(p => (
               <button key={p} onClick={() => onNavigate(`horoscope/${p}`)}
-                style={{ padding:'8px 20px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: period===p ? '#F5C842' : 'rgba(255,255,255,0.1)', color: period===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
+                style={{ padding:'8px 18px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: period===p ? '#F5C842' : 'rgba(255,255,255,0.1)', color: period===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
                 {PERIOD_LABEL[p] || p}
               </button>
             ))}
@@ -288,12 +304,27 @@ function HoroscopeHubPage({ onNavigate }) {
           </p>
           {/* Period selector */}
           <div style={{ display:'inline-flex', gap:4, background:'rgba(255,255,255,0.08)', padding:4, borderRadius:999, border:'1px solid rgba(255,255,255,0.12)' }}>
-            {PERIODS.map(p => (
+            {HUB_PERIODS.map(p => (
               <button key={p} onClick={() => setActivePeriod(p)}
                 style={{ padding:'9px 24px', borderRadius:999, border:'none', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer', background: activePeriod===p ? '#F5C842' : 'transparent', color: activePeriod===p ? '#0D1B3E' : 'rgba(253,246,236,0.7)', transition:'all 150ms' }}>
                 {PERIOD_LABEL[p] || p}
               </button>
             ))}
+          </div>
+          {/* Quick links for yesterday / tomorrow */}
+          <div style={{ marginTop:16, display:'flex', gap:12, justifyContent:'center' }}>
+            <button onClick={() => onNavigate('horoscope/yesterday')}
+              style={{ background:'none', border:'1px solid rgba(245,200,66,0.3)', color:'rgba(245,200,66,0.75)', padding:'5px 16px', borderRadius:999, fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'all 150ms' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='#F5C842'; e.currentTarget.style.color='#F5C842'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(245,200,66,0.3)'; e.currentTarget.style.color='rgba(245,200,66,0.75)'; }}>
+              ← Yesterday
+            </button>
+            <button onClick={() => onNavigate('horoscope/tomorrow')}
+              style={{ background:'none', border:'1px solid rgba(245,200,66,0.3)', color:'rgba(245,200,66,0.75)', padding:'5px 16px', borderRadius:999, fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'all 150ms' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='#F5C842'; e.currentTarget.style.color='#F5C842'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(245,200,66,0.3)'; e.currentTarget.style.color='rgba(245,200,66,0.75)'; }}>
+              Tomorrow →
+            </button>
           </div>
         </div>
       </div>
@@ -363,7 +394,8 @@ function HoroscopePage({ path, onNavigate }) {
   const period = parts[1]; // daily | weekly | monthly | undefined
   const rashiSlug = parts[2];
 
-  if (rashiSlug) return <RashiDetailPage rashiSlug={rashiSlug} period={period} onNavigate={onNavigate} />;
+  if (rashiSlug && PERIODS.includes(period)) return <RashiDetailPage rashiSlug={rashiSlug} period={period} onNavigate={onNavigate} />;
+  if (rashiSlug) return <RashiDetailPage rashiSlug={rashiSlug} period={period || 'today'} onNavigate={onNavigate} />;
   if (period && PERIODS.includes(period)) return <HoroscopeListPage period={period} onNavigate={onNavigate} />;
   return <HoroscopeHubPage onNavigate={onNavigate} />;
 }
