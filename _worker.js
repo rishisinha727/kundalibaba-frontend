@@ -32,9 +32,23 @@ export default {
   },
 };
 
+// Pretty URL → internal page key mapping (mirrors PAGE_TO_URL in index.html)
+const URL_TO_KEY = {
+  'free-kundali-online':     'kundali',
+  'kundali-matching-online': 'matching',
+  'chat-with-astrologer':    'chat',
+};
+
 function pathnameToPageKey(pathname) {
   const p = pathname.replace(/^\//, '').replace(/\/$/, '');
-  return p || 'home';
+  if (!p) return 'home';
+  // Translate pretty URLs to internal keys
+  if (URL_TO_KEY[p]) return URL_TO_KEY[p];
+  // Horoscope weekly/monthly sign pages fall back to today's sign key for SEO
+  // e.g. horoscope/weekly/aries → horoscope/today/aries
+  const horoMatch = p.match(/^horoscope\/(weekly|monthly)\/(.+)$/);
+  if (horoMatch) return `horoscope/today/${horoMatch[2]}`;
+  return p;
 }
 
 async function fetchSeo(pageKey, ctx) {
