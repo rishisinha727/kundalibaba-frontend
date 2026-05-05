@@ -765,6 +765,7 @@ function CMS() {
   const [cmsTab, setCmsTab] = React.useState('pages');
   const [seoData, setSeoData] = React.useState({});
   const [customPages, setCustomPages] = React.useState([]);
+  const [dynamicPageDefs, setDynamicPageDefs] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [modal, setModal] = React.useState(null);
@@ -776,12 +777,26 @@ function CMS() {
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
   React.useEffect(() => {
+    const token = Auth.getToken();
     Promise.all([
       fetch(`${API}/cms/pages`).then(r=>r.json()),
-      fetch(`${API}/cms/custom-pages`, { headers:{ Authorization:`Bearer ${Auth.getToken()}` } }).then(r=>r.json()),
-    ]).then(([p, cp]) => {
+      fetch(`${API}/cms/custom-pages`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()),
+      fetch(`${API}/content/blogs/admin/all`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>({ data:[] })),
+    ]).then(([p, cp, blogs]) => {
       setSeoData(p.data || {});
-      setCustomPages(cp.data || []);
+      const cpList = cp.data || [];
+      setCustomPages(cpList);
+
+      // Build dynamic page defs from custom pages + blog articles
+      const dyn = [];
+      cpList.forEach(pg => {
+        dyn.push({ key: pg.slug, name: pg.title, url: `/${pg.slug}`, section: 'Custom Pages' });
+      });
+      const blogList = Array.isArray(blogs.data) ? blogs.data : [];
+      blogList.forEach(b => {
+        dyn.push({ key: `articles/${b.slug}`, name: b.title, url: `/articles/${b.slug}`, section: 'Blog Articles' });
+      });
+      setDynamicPageDefs(dyn);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -863,38 +878,45 @@ function CMS() {
 
         {/* ── Fixed page SEO tab ── */}
         {cmsTab === 'pages' && (() => {
-          const sections = [...new Set(PAGE_DEFS.map(p => p.section))];
+          const allDefs = [...PAGE_DEFS, ...dynamicPageDefs];
+          const sections = [...new Set(allDefs.map(p => p.section))];
+          const seoSection = (sec) => {
+            const pages = allDefs.filter(p => p.section === sec);
+            const filled = pages.filter(p => seoData[p.key]?.metaTitle).length;
+            return (
+              <div key={sec} style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)', overflow:'hidden' }}>
+                <div style={{ background:'#f9fafb', padding:'10px 18px', borderBottom:'1px solid #f0f0f0', display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:'#374151' }}>{sec}</span>
+                  <span style={{ fontSize:11, color:'#9ca3af' }}>{pages.length} pages</span>
+                  <span style={{ marginLeft:'auto', fontSize:11, color: filled===pages.length ? '#22c55e' : '#9ca3af', fontWeight:600 }}>{filled}/{pages.length} SEO done</span>
+                </div>
+                <table style={{ width:'100%' }}>
+                  <THead cols={['Page','URL','Meta Title','Meta Desc','Actions']} />
+                  <tbody>
+                    {pages.map(pd => {
+                      const s = seoData[pd.key] || {};
+                      const done = !!(s.metaTitle && s.metaDesc);
+                      return (
+                        <tr key={pd.key}>
+                          <TD style={{ fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
+                            <span style={{ width:7, height:7, borderRadius:'50%', background: done ? '#22c55e' : '#e5e7eb', flexShrink:0, display:'inline-block' }} />
+                            {pd.name}
+                          </TD>
+                          <TD><span style={{ fontFamily:'monospace', fontSize:11, color:C.saffron }}>{pd.url}</span></TD>
+                          <TD><span style={{ fontSize:12, color:s.metaTitle?'#374151':'#d1d5db' }}>{s.metaTitle ? s.metaTitle.slice(0,40)+(s.metaTitle.length>40?'…':'') : '— not set —'}</span></TD>
+                          <TD style={{ maxWidth:220 }}><span style={{ fontSize:12, color:s.metaDesc?'#374151':'#d1d5db' }}>{s.metaDesc ? s.metaDesc.slice(0,50)+'…' : '— not set —'}</span></TD>
+                          <TD><Btn variant="secondary" size="sm" onClick={() => openEditSeo(pd)}>✏ Edit SEO</Btn></TD>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          };
           return (
             <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-              {sections.map(sec => (
-                <div key={sec} style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)', overflow:'hidden' }}>
-                  <div style={{ background:'#f9fafb', padding:'10px 18px', borderBottom:'1px solid #f0f0f0', display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontSize:13, fontWeight:700, color:'#374151' }}>{sec}</span>
-                    <span style={{ fontSize:11, color:'#9ca3af' }}>{PAGE_DEFS.filter(p=>p.section===sec).length} pages</span>
-                  </div>
-                  <table style={{ width:'100%' }}>
-                    <THead cols={['Page','URL','Meta Title','Meta Desc','Actions']} />
-                    <tbody>
-                      {PAGE_DEFS.filter(p => p.section === sec).map(pd => {
-                        const s = seoData[pd.key] || {};
-                        const done = !!(s.metaTitle && s.metaDesc);
-                        return (
-                          <tr key={pd.key}>
-                            <TD style={{ fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
-                              <span style={{ width:7, height:7, borderRadius:'50%', background: done ? '#22c55e' : '#e5e7eb', flexShrink:0, display:'inline-block' }} />
-                              {pd.name}
-                            </TD>
-                            <TD><span style={{ fontFamily:'monospace', fontSize:11, color:C.saffron }}>{pd.url}</span></TD>
-                            <TD><span style={{ fontSize:12, color:s.metaTitle?'#374151':'#d1d5db' }}>{s.metaTitle ? s.metaTitle.slice(0,40)+(s.metaTitle.length>40?'…':'') : '— not set —'}</span></TD>
-                            <TD style={{ maxWidth:220 }}><span style={{ fontSize:12, color:s.metaDesc?'#374151':'#d1d5db' }}>{s.metaDesc ? s.metaDesc.slice(0,50)+'…' : '— not set —'}</span></TD>
-                            <TD><Btn variant="secondary" size="sm" onClick={() => openEditSeo(pd)}>✏ Edit SEO</Btn></TD>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
+              {sections.map(sec => seoSection(sec))}
             </div>
           );
         })()}
