@@ -1,6 +1,6 @@
 const BACKEND = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
 const BASE    = 'https://kundalibaba.com';
-const TODAY   = new Date().toISOString().slice(0, 10);
+const today   = () => new Date().toISOString().slice(0, 10);
 
 export default {
   async fetch(request, env, ctx) {
@@ -68,9 +68,9 @@ function serveSitemapIndex(ctx) {
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    `  <sitemap><loc>${BASE}/sitemap_static.xml</loc><lastmod>${TODAY}</lastmod></sitemap>`,
-    `  <sitemap><loc>${BASE}/sitemap_blog.xml</loc><lastmod>${TODAY}</lastmod></sitemap>`,
-    `  <sitemap><loc>${BASE}/sitemap_pages.xml</loc><lastmod>${TODAY}</lastmod></sitemap>`,
+    `  <sitemap><loc>${BASE}/sitemap_static.xml</loc><lastmod>${today()}</lastmod></sitemap>`,
+    `  <sitemap><loc>${BASE}/sitemap_blog.xml</loc><lastmod>${today()}</lastmod></sitemap>`,
+    `  <sitemap><loc>${BASE}/sitemap_pages.xml</loc><lastmod>${today()}</lastmod></sitemap>`,
     '</sitemapindex>',
   ].join('\n');
   return xmlResponse(xml);
@@ -92,30 +92,30 @@ function serveStaticSitemap() {
   const entries = [];
 
   // Main pages
-  entries.push(urlEntry(`${BASE}/`,                          { lastmod: TODAY, changefreq: 'daily',   priority: '1.0' }));
-  entries.push(urlEntry(`${BASE}/free-kundali-online`,       { lastmod: TODAY, changefreq: 'weekly',  priority: '0.9' }));
-  entries.push(urlEntry(`${BASE}/kundali-matching-online`,   { lastmod: TODAY, changefreq: 'weekly',  priority: '0.9' }));
-  entries.push(urlEntry(`${BASE}/horoscope`,                 { lastmod: TODAY, changefreq: 'daily',   priority: '0.9' }));
-  entries.push(urlEntry(`${BASE}/articles`,                  { lastmod: TODAY, changefreq: 'daily',   priority: '0.8' }));
-  entries.push(urlEntry(`${BASE}/astrology-calculators`,     { lastmod: TODAY, changefreq: 'weekly',  priority: '0.8' }));
-  entries.push(urlEntry(`${BASE}/chat-with-astrologer`,      { lastmod: TODAY, changefreq: 'weekly',  priority: '0.8' }));
-  entries.push(urlEntry(`${BASE}/shop`,                      { lastmod: TODAY, changefreq: 'weekly',  priority: '0.7' }));
+  entries.push(urlEntry(`${BASE}/`,                          { lastmod: today(), changefreq: 'daily',   priority: '1.0' }));
+  entries.push(urlEntry(`${BASE}/free-kundali-online`,       { lastmod: today(), changefreq: 'weekly',  priority: '0.9' }));
+  entries.push(urlEntry(`${BASE}/kundali-matching-online`,   { lastmod: today(), changefreq: 'weekly',  priority: '0.9' }));
+  entries.push(urlEntry(`${BASE}/horoscope`,                 { lastmod: today(), changefreq: 'daily',   priority: '0.9' }));
+  entries.push(urlEntry(`${BASE}/articles`,                  { lastmod: today(), changefreq: 'daily',   priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/astrology-calculators`,     { lastmod: today(), changefreq: 'weekly',  priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/chat-with-astrologer`,      { lastmod: today(), changefreq: 'weekly',  priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/shop`,                      { lastmod: today(), changefreq: 'weekly',  priority: '0.7' }));
 
   // Horoscope category pages
-  entries.push(urlEntry(`${BASE}/horoscope/today`,   { lastmod: TODAY, changefreq: 'daily',   priority: '0.8' }));
-  entries.push(urlEntry(`${BASE}/horoscope/weekly`,  { lastmod: TODAY, changefreq: 'weekly',  priority: '0.8' }));
-  entries.push(urlEntry(`${BASE}/horoscope/monthly`, { lastmod: TODAY, changefreq: 'monthly', priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/today`,   { lastmod: today(), changefreq: 'daily',   priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/weekly`,  { lastmod: today(), changefreq: 'weekly',  priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/monthly`, { lastmod: today(), changefreq: 'monthly', priority: '0.8' }));
 
   // Horoscope rashi pages — today / weekly / monthly
   for (const rashi of RASHIS) {
-    entries.push(urlEntry(`${BASE}/horoscope/today/${rashi}`,   { lastmod: TODAY, changefreq: 'daily',   priority: '0.7' }));
-    entries.push(urlEntry(`${BASE}/horoscope/weekly/${rashi}`,  { lastmod: TODAY, changefreq: 'weekly',  priority: '0.6' }));
-    entries.push(urlEntry(`${BASE}/horoscope/monthly/${rashi}`, { lastmod: TODAY, changefreq: 'monthly', priority: '0.6' }));
+    entries.push(urlEntry(`${BASE}/horoscope/today/${rashi}`,   { lastmod: today(), changefreq: 'daily',   priority: '0.7' }));
+    entries.push(urlEntry(`${BASE}/horoscope/weekly/${rashi}`,  { lastmod: today(), changefreq: 'weekly',  priority: '0.6' }));
+    entries.push(urlEntry(`${BASE}/horoscope/monthly/${rashi}`, { lastmod: today(), changefreq: 'monthly', priority: '0.6' }));
   }
 
   // Calculator pages
   for (const slug of CALC_SLUGS) {
-    entries.push(urlEntry(`${BASE}/${slug}`, { lastmod: TODAY, changefreq: 'monthly', priority: '0.7' }));
+    entries.push(urlEntry(`${BASE}/${slug}`, { lastmod: today(), changefreq: 'monthly', priority: '0.7' }));
   }
 
   const xml = [
@@ -144,7 +144,7 @@ async function serveBlogSitemap(ctx) {
   const entries = items
     .filter(b => b.slug)
     .map(b => urlEntry(`${BASE}/articles/${b.slug}`, {
-      lastmod:    (b.publishedAt || b.updatedAt || TODAY).slice(0, 10),
+      lastmod:    (b.publishedAt || b.updatedAt || today()).slice(0, 10),
       changefreq: 'weekly',
       priority:   '0.6',
     }));
@@ -175,7 +175,7 @@ async function servePagesSitemap(ctx) {
   const entries = items
     .filter(p => p.slug && p.isPublished)
     .map(p => urlEntry(`${BASE}/${p.slug}`, {
-      lastmod:    (p.updatedAt || TODAY).slice(0, 10),
+      lastmod:    (p.updatedAt || today()).slice(0, 10),
       changefreq: 'weekly',
       priority:   '0.6',
     }));
