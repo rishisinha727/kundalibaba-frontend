@@ -1041,9 +1041,9 @@ function CalculatorsHub({ onNavigate }) {
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(245,200,66,0.05) 1px, transparent 1px)', backgroundSize:'30px 30px', pointerEvents:'none' }} />
         <div style={{ maxWidth:860, margin:'0 auto', textAlign:'center', position:'relative' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.16em', textTransform:'uppercase', color:'#F5C842', marginBottom:14 }}>✦ Vedic Astrology Tools</div>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile?28:52, fontWeight:800, color:'white', lineHeight:1.15, margin:'0 0 16px' }}>
+          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile?28:52, fontWeight:800, color:'white', lineHeight:1.15, margin:'0 0 16px' }}>
             Free Astrology Calculators
-          </h2>
+          </h1>
           <p style={{ fontSize: isMobile?14:17, color:'rgba(253,246,236,0.7)', lineHeight:1.75, maxWidth:600, margin:'0 auto', marginBottom:0 }}>
             20 free Vedic astrology tools — from numerology and love compatibility to birth charts, doshas, and planetary dashas.
           </p>
