@@ -316,30 +316,166 @@ const PLANET_EMOJI = { SUN:'☀️', MOON:'🌙', MARS:'🔴', MERCURY:'☿', JU
 // PURE FRONTEND CALCULATORS
 // ══════════════════════════════════════════════════════════════════════════════
 
+const LOVE_QUOTES = [
+  "Love will sweep you off your feet, leaving you breathless in its embrace.",
+  "The best thing to hold onto in life is each other.",
+  "Where there is love there is life. — Mahatma Gandhi",
+  "Love is not just a feeling, it is an art.",
+  "In the arithmetic of love, one plus one equals everything.",
+  "Love is the bridge between two hearts.",
+  "The greatest happiness of life is the conviction that we are loved.",
+  "Love is composed of a single soul inhabiting two bodies.",
+  "To love and be loved is to feel the sun from both sides.",
+  "A loving heart is the truest wisdom.",
+];
+
 function LoveCalc({ meta, onNavigate }) {
-  const [n1,setN1]=React.useState(''); const [n2,setN2]=React.useState(''); const [res,setRes]=React.useState(null);
-  const go = () => { if(!n1.trim()||!n2.trim()) return; setRes(loveScore(n1,n2)); };
+  const isMobile = useMobile();
+  const [n1, setN1] = React.useState('');
+  const [n2, setN2] = React.useState('');
+  const [g1, setG1] = React.useState('male');
+  const [g2, setG2] = React.useState('female');
+  const [err1, setErr1] = React.useState(false);
+  const [err2, setErr2] = React.useState(false);
+  const [res, setRes] = React.useState(null);
+
+  const quote = LOVE_QUOTES[new Date().getDate() % LOVE_QUOTES.length];
+
+  const go = () => {
+    const e1 = !n1.trim(), e2 = !n2.trim();
+    setErr1(e1); setErr2(e2);
+    if (e1 || e2) return;
+    setRes(loveScore(n1, n2));
+  };
+
+  const inputSt = (err) => ({
+    width: '100%', height: 46, padding: '0 14px', boxSizing: 'border-box',
+    border: `1.5px solid ${err ? '#E53935' : '#EDD9B8'}`, borderRadius: 10,
+    fontSize: 14, color: '#1A0A00', outline: 'none', fontFamily: 'inherit',
+    background: '#FFFDF8',
+  });
+
+  const genderBtn = (active) => ({
+    flex: 1, padding: '9px 0', border: 'none', borderRadius: 8, cursor: 'pointer',
+    fontFamily: 'inherit', fontWeight: 700, fontSize: 13,
+    background: active ? '#F5C842' : '#E5E7EB',
+    color: active ? '#0D1B3E' : '#6B7280',
+    transition: 'all 150ms',
+  });
+
   return (
-    <CalcLayout meta={meta} onNavigate={onNavigate}>
-      <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-        <InputField label="Your Name" value={n1} onChange={setN1} placeholder="Enter your full name" />
-        <InputField label="Partner's Name" value={n2} onChange={setN2} placeholder="Enter partner's full name" />
-        <CalcButton onClick={go}>Calculate Love Score</CalcButton>
-      </div>
-      {res && (
-        <ResultBox>
-          <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:64 }}>{res.emoji}</div>
-            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:52, fontWeight:800, color:res.color, lineHeight:1 }}>{res.score}%</div>
-            <div style={{ fontSize:22, fontWeight:700, color:'#0D1B3E', margin:'8px 0 4px' }}>{res.label}</div>
-            <div style={{ fontSize:14, color:'#6B4C2A', marginBottom:16 }}>{n1} & {n2}</div>
-            <div style={{ fontSize:13, color:'#A07850', lineHeight:1.6, maxWidth:420, margin:'0 auto' }}>
-              {res.score>=85?'The stars have aligned a powerful connection. Your names vibrate at a frequency that creates deep understanding and harmony.':res.score>=70?'A strong connection with natural chemistry. Nurture this bond and it will flourish beautifully.':res.score>=55?'A compatible pairing with room to grow. Understanding and communication will strengthen your bond.':'Every relationship takes effort. Focus on communication and mutual respect to build something special.'}
-            </div>
+    <div style={{ background: '#FFF9F0', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 1020, margin: '0 auto', padding: isMobile ? '24px 16px 48px' : '40px 24px 72px' }}>
+        {/* Back nav */}
+        <button onClick={() => onNavigate('astrology-calculators')}
+          style={{ background: 'none', border: 'none', color: '#E8890C', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 20, padding: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+          ← All Calculators
+        </button>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+          <span style={{ fontSize: 44 }}>{meta.icon}</span>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#E8890C', marginBottom: 4 }}>{meta.category}</div>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: isMobile ? 24 : 32, fontWeight: 800, color: '#0D1B3E', margin: 0, lineHeight: 1.2 }}>{meta.title}</h2>
           </div>
-        </ResultBox>
-      )}
-    </CalcLayout>
+        </div>
+        <p style={{ fontSize: 14, color: '#6B4C2A', marginBottom: 28, lineHeight: 1.7 }}>{meta.shortDesc}</p>
+
+        {/* Two-column layout */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 300px', gap: 20, alignItems: 'start' }}>
+
+          {/* ── Form card ── */}
+          <div style={{ background: 'white', borderRadius: 20, padding: isMobile ? '24px 16px' : '36px 40px', border: '1px solid #EDD9B8', borderBottom: '3px solid #F5C842', boxShadow: '0 4px 16px rgba(13,27,62,0.06)' }}>
+
+            {/* Name + gender row */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 48px 1fr', gap: isMobile ? 20 : 12, alignItems: 'start', marginBottom: 28 }}>
+
+              {/* Your Name */}
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: 15, color: '#0D1B3E', marginBottom: 10 }}>Your Name</label>
+                <input
+                  value={n1} onChange={e => { setN1(e.target.value); setErr1(false); }}
+                  placeholder="Enter Your Name" style={inputSt(err1)}
+                  onFocus={e => e.target.style.borderColor = '#E8890C'}
+                  onBlur={e => e.target.style.borderColor = err1 ? '#E53935' : '#EDD9B8'}
+                />
+                {err1 && <div style={{ color: '#E53935', fontSize: 12, marginTop: 5, fontWeight: 500 }}>Please enter your name!</div>}
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button style={genderBtn(g1 === 'male')}   onClick={() => setG1('male')}>Male</button>
+                  <button style={genderBtn(g1 === 'female')} onClick={() => setG1('female')}>Female</button>
+                </div>
+              </div>
+
+              {/* Heart divider */}
+              {!isMobile && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 36 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#FFF0F0', border: '1px solid #F5C842', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>❤️</div>
+                </div>
+              )}
+
+              {/* Partner's Name */}
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: 15, color: '#0D1B3E', marginBottom: 10 }}>Partner's Name</label>
+                <input
+                  value={n2} onChange={e => { setN2(e.target.value); setErr2(false); }}
+                  placeholder="Enter Partner's Name" style={inputSt(err2)}
+                  onFocus={e => e.target.style.borderColor = '#E8890C'}
+                  onBlur={e => e.target.style.borderColor = err2 ? '#E53935' : '#EDD9B8'}
+                />
+                {err2 && <div style={{ color: '#E53935', fontSize: 12, marginTop: 5, fontWeight: 500 }}>Please enter partner's name!</div>}
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button style={genderBtn(g2 === 'male')}   onClick={() => setG2('male')}>Male</button>
+                  <button style={genderBtn(g2 === 'female')} onClick={() => setG2('female')}>Female</button>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculate button */}
+            <div style={{ textAlign: 'center' }}>
+              <button onClick={go} style={{
+                background: '#0D1B3E', color: 'white', border: 'none', borderRadius: 12,
+                padding: '14px 48px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'inherit', letterSpacing: '0.02em', transition: 'background 150ms',
+              }}
+                onMouseEnter={e => e.target.style.background = '#152855'}
+                onMouseLeave={e => e.target.style.background = '#0D1B3E'}>
+                Calculate Love %
+              </button>
+            </div>
+
+            {/* Result */}
+            {res && (
+              <div style={{ marginTop: 32, paddingTop: 32, borderTop: '1px solid #EDD9B8', textAlign: 'center' }}>
+                <div style={{ fontSize: 56, marginBottom: 4 }}>{res.emoji}</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 56, fontWeight: 800, color: res.color, lineHeight: 1 }}>{res.score}%</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3E', margin: '10px 0 4px' }}>{res.label}</div>
+                <div style={{ fontSize: 14, color: '#A07850', marginBottom: 12 }}>{n1} &amp; {n2}</div>
+                {/* Score bar */}
+                <div style={{ background: '#F3F4F6', borderRadius: 999, height: 10, maxWidth: 320, margin: '0 auto 16px', overflow: 'hidden' }}>
+                  <div style={{ width: `${res.score}%`, height: '100%', background: `linear-gradient(90deg, #F5C842, ${res.color})`, borderRadius: 999, transition: 'width 800ms ease' }} />
+                </div>
+                <div style={{ fontSize: 13, color: '#6B4C2A', lineHeight: 1.7, maxWidth: 380, margin: '0 auto' }}>
+                  {res.score >= 85 ? 'The stars have aligned a powerful connection. Your names vibrate at a frequency that creates deep understanding and harmony.'
+                    : res.score >= 70 ? 'A strong connection with natural chemistry. Nurture this bond and it will flourish beautifully.'
+                    : res.score >= 55 ? 'A compatible pairing with room to grow. Understanding and communication will strengthen your bond.'
+                    : 'Every relationship takes effort. Focus on communication and mutual respect to build something special.'}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Quote card ── */}
+          <div style={{ background: 'white', borderRadius: 20, padding: '32px 24px', border: '1px solid #EDD9B8', boxShadow: '0 4px 16px rgba(13,27,62,0.06)', textAlign: 'center' }}>
+            <div style={{ fontSize: 28, marginBottom: 12 }}>💝</div>
+            <div style={{ fontWeight: 800, letterSpacing: '0.1em', color: '#0D1B3E', fontSize: 12, textTransform: 'uppercase', marginBottom: 16 }}>Love Quote of the Day</div>
+            <div style={{ width: 40, height: 2, background: '#F5C842', margin: '0 auto 20px' }} />
+            <p style={{ fontStyle: 'italic', fontSize: 15, color: '#374151', lineHeight: 1.8, margin: 0 }}>"{quote}"</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
   );
 }
 
