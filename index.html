@@ -54,6 +54,25 @@
       -webkit-font-smoothing: antialiased;
     }
     #root { min-height: 100vh; }
+    /* CMS SEO header content block */
+    .seo-header-content h1 { font-family:'Playfair Display',serif; font-size:clamp(26px,4vw,42px); font-weight:800; color:#F5C842; margin:0 0 16px; line-height:1.2; }
+    .seo-header-content p  { font-size:15px; color:rgba(253,246,236,0.82); line-height:1.8; margin:0; max-width:760px; }
+    /* CMS SEO footer content block */
+    .seo-footer-content { color:rgba(253,246,236,0.78); font-size:15px; line-height:1.85; }
+    .seo-footer-content h2 { font-family:'Playfair Display',serif; font-size:clamp(18px,2.5vw,24px); font-weight:700; color:#F5C842; margin:40px 0 14px; padding-bottom:8px; border-bottom:1px solid rgba(245,200,66,0.15); }
+    .seo-footer-content h3 { font-size:16px; font-weight:600; color:rgba(253,246,236,0.9); margin:20px 0 8px; }
+    .seo-footer-content p  { margin:0 0 14px; }
+    .seo-footer-content a  { color:#F5C842; text-decoration:none; border-bottom:1px solid rgba(245,200,66,0.3); }
+    .seo-footer-content a:hover { border-bottom-color:#F5C842; }
+    .seo-footer-content table { width:100%; border-collapse:collapse; margin:16px 0 24px; font-size:14px; }
+    .seo-footer-content th { background:rgba(245,200,66,0.12); color:#F5C842; font-weight:700; padding:10px 14px; text-align:left; border:1px solid rgba(245,200,66,0.15); }
+    .seo-footer-content td { padding:9px 14px; border:1px solid rgba(245,200,66,0.1); color:rgba(253,246,236,0.75); }
+    .seo-footer-content tr:nth-child(even) td { background:rgba(255,255,255,0.03); }
+    .seo-footer-content .faq-item { border-bottom:1px solid rgba(245,200,66,0.1); padding:16px 0; }
+    .seo-footer-content .faq-q { font-weight:700; color:rgba(253,246,236,0.95); margin-bottom:6px; }
+    .seo-footer-content .faq-a { color:rgba(253,246,236,0.68); font-size:14px; }
+    .seo-footer-content ul, .seo-footer-content ol { padding-left:20px; margin:0 0 14px; }
+    .seo-footer-content li { margin-bottom:5px; }
   </style>
 </head>
 <body>
@@ -190,7 +209,7 @@ Object.assign(window, { AuthModal });
       return false;
     }
 
-    // Apply SEO meta tags from CMS
+    // Apply SEO meta tags + FAQ schema from CMS
     function applySeo(seoMap, pageKey) {
       const s = seoMap[pageKey] || {};
       if (s.metaTitle) document.title = s.metaTitle;
@@ -206,6 +225,35 @@ Object.assign(window, { AuthModal });
       setMeta('og:image', s.ogImage, true);
       let canon = document.querySelector('link[rel="canonical"]');
       if (s.canonical) { if (!canon) { canon = document.createElement('link'); canon.setAttribute('rel','canonical'); document.head.appendChild(canon); } canon.setAttribute('href', s.canonical); }
+      // FAQ schema injection
+      let faqEl = document.getElementById('kb-faq-schema');
+      if (s.faqSchema) {
+        if (!faqEl) { faqEl = document.createElement('script'); faqEl.id = 'kb-faq-schema'; faqEl.type = 'application/ld+json'; document.head.appendChild(faqEl); }
+        faqEl.textContent = s.faqSchema;
+      } else if (faqEl) { faqEl.remove(); }
+    }
+
+    // Shared page content blocks rendered around every page
+    function PageHeaderContent({ seo }) {
+      if (!seo?.headerContent) return null;
+      return (
+        <div style={{ background:'linear-gradient(135deg,#0D1B3E 0%,#1a2d5a 100%)', borderBottom:'1px solid rgba(245,200,66,0.15)', padding:'40px 0 36px' }}>
+          <div className="seo-header-content" style={{ maxWidth:1100, margin:'0 auto', padding:'0 24px' }}
+            dangerouslySetInnerHTML={{ __html: seo.headerContent }}
+          />
+        </div>
+      );
+    }
+
+    function PageFooterContent({ seo }) {
+      if (!seo?.footerHtml) return null;
+      return (
+        <div style={{ background:'#060D20', borderTop:'1px solid rgba(245,200,66,0.1)', padding:'56px 0 40px' }}>
+          <div className="seo-footer-content" style={{ maxWidth:1100, margin:'0 auto', padding:'0 24px' }}
+            dangerouslySetInnerHTML={{ __html: seo.footerHtml }}
+          />
+        </div>
+      );
     }
 
     const BACKEND = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
@@ -286,9 +334,15 @@ Object.assign(window, { AuthModal });
       }
       const sliderCtx = sliderContext();
 
+      const pageSeo = seoMap[page] || {};
+      const showHeader = !!(pageSeo.headerContent) && page !== 'home';
+      const showFooter = !!(pageSeo.footerHtml) && !hideFooter;
+
       return (
         <div>
           <KBNav currentPage={page} onNavigate={onNavigate} tweaks={t} user={user} onSignIn={() => setShowAuth(true)} onLogout={handleLogout} />
+
+          {showHeader && <PageHeaderContent seo={pageSeo} />}
 
           {page === 'home'  && <LandingPage onNavigate={onNavigate} />}
           {isKundali        && <KundaliPage onNavigate={onNavigate} tweaks={t} initialSubPage={page} key={page} onShowAuth={() => setShowAuth(true)} />}
@@ -299,6 +353,7 @@ Object.assign(window, { AuthModal });
           {isBlog           && <BlogPage path={page} onNavigate={onNavigate} />}
           {isCustomPage     && <CustomPageView slug={page} onNavigate={onNavigate} />}
 
+          {showFooter && <PageFooterContent seo={pageSeo} />}
           {!hideFooter && <KBFooter onNavigate={onNavigate} />}
           {!hideFooter && sliderCtx !== null && typeof ArticlesSlider !== 'undefined' && (
             <ArticlesSlider context={sliderCtx} onNavigate={onNavigate} />
