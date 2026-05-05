@@ -111,6 +111,8 @@ function TrustBar() {
 function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [calcOpen, setCalcOpen] = React.useState(false);
+  const [calcMobileOpen, setCalcMobileOpen] = React.useState(false);
   const isMobile = useMobile();
 
   React.useEffect(() => {
@@ -122,14 +124,25 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
   // Close mobile menu on nav
   const navigate = (pg) => { onNavigate(pg); setMobileOpen(false); };
 
-  const links = [
+  const linksLeft = [
     { id:'horoscope', label:'Horoscope' },
     { id:'kundali', label:'Free Kundali' },
     { id:'matching', label:'Kundali Match' },
+  ];
+  const linksRight = [
     { id:'articles', label:'Articles' },
     { id:'chat', label:'Talk to Pandit' },
     { id:'shop', label:'Shop' },
   ];
+  const links = [...linksLeft, ...linksRight];
+
+  const calcMeta = (typeof CALC_META !== 'undefined' ? CALC_META : (window.CALC_META || []));
+  const calcCategories = calcMeta.reduce((acc, c) => {
+    if (!acc[c.category]) acc[c.category] = [];
+    acc[c.category].push(c);
+    return acc;
+  }, {});
+  const isCalcActive = currentPage === 'astrology-calculators' || (typeof CALC_SLUGS !== 'undefined' ? CALC_SLUGS : (window.CALC_SLUGS || [])).includes(currentPage);
 
   const navBg = scrolled
     ? 'rgba(6,13,32,0.92)'
@@ -158,7 +171,82 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
         {/* Desktop links */}
         {!isMobile && (
           <div style={{ display:'flex', alignItems:'center', gap:2, flex:1 }}>
-            {links.map(l => {
+            {linksLeft.map(l => {
+              const isActive = currentPage === l.id || currentPage.startsWith(l.id + '/');
+              return (
+                <span key={l.id} onClick={() => navigate(l.id)} style={{
+                  padding:'8px 13px', fontSize:13.5, fontWeight:500,
+                  color: isActive ? '#F5C842' : 'rgba(253,246,236,0.72)',
+                  borderRadius:6, cursor:'pointer',
+                  borderBottom: isActive ? '2px solid #E8890C' : '2px solid transparent',
+                  transition:'all 150ms',
+                }}
+                  onMouseEnter={e => { if (!isActive) e.target.style.color = 'white'; }}
+                  onMouseLeave={e => { if (!isActive) e.target.style.color = 'rgba(253,246,236,0.72)'; }}
+                >{l.label}</span>
+              );
+            })}
+
+            {/* Astrology Calculators dropdown */}
+            <div style={{ position:'relative' }}
+              onMouseEnter={() => setCalcOpen(true)}
+              onMouseLeave={() => setCalcOpen(false)}
+            >
+              <span onClick={() => navigate('astrology-calculators')} style={{
+                padding:'8px 13px', fontSize:13.5, fontWeight:500,
+                color: isCalcActive ? '#F5C842' : 'rgba(253,246,236,0.72)',
+                borderRadius:6, cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4,
+                borderBottom: isCalcActive ? '2px solid #E8890C' : '2px solid transparent',
+                transition:'all 150ms', userSelect:'none',
+              }}
+                onMouseEnter={e => { if (!isCalcActive) { e.currentTarget.style.color = 'white'; } }}
+                onMouseLeave={e => { if (!isCalcActive) { e.currentTarget.style.color = 'rgba(253,246,236,0.72)'; } }}
+              >Calculators <span style={{ fontSize:9, opacity:0.7, marginTop:1 }}>▾</span></span>
+
+              {calcOpen && (
+                <div style={{
+                  position:'absolute', top:'calc(100% + 4px)', left:'50%', transform:'translateX(-50%)',
+                  background:'#0D1B3E', border:'1px solid rgba(245,200,66,0.2)',
+                  borderRadius:12, padding:'16px 12px 12px',
+                  width:620, zIndex:500,
+                  boxShadow:'0 16px 48px rgba(0,0,0,0.6)',
+                }}>
+                  {/* arrow */}
+                  <div style={{ position:'absolute', top:-6, left:'50%', transform:'translateX(-50%)', width:12, height:6, overflow:'hidden' }}>
+                    <div style={{ width:10, height:10, background:'#0D1B3E', border:'1px solid rgba(245,200,66,0.2)', transform:'rotate(45deg)', marginTop:3, marginLeft:1 }} />
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px 8px' }}>
+                    {Object.entries(calcCategories).map(([cat, items]) => (
+                      <div key={cat}>
+                        <div style={{ fontSize:10, fontWeight:700, color:'rgba(245,200,66,0.55)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:6, paddingLeft:4 }}>{cat}</div>
+                        {items.map(c => (
+                          <div key={c.slug} onClick={() => { navigate(c.slug); setCalcOpen(false); }} style={{
+                            display:'flex', alignItems:'center', gap:8, padding:'6px 8px',
+                            borderRadius:7, cursor:'pointer', transition:'background 120ms',
+                          }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(245,200,66,0.08)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <span style={{ fontSize:16, flexShrink:0 }}>{c.icon}</span>
+                            <div>
+                              <div style={{ fontSize:12.5, fontWeight:600, color:'rgba(253,246,236,0.9)', lineHeight:1.2 }}>{c.title}</div>
+                              <div style={{ fontSize:10.5, color:'rgba(253,246,236,0.4)', lineHeight:1.3 }}>{c.shortDesc}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ borderTop:'1px solid rgba(245,200,66,0.1)', marginTop:12, paddingTop:10, textAlign:'center' }}>
+                    <span onClick={() => { navigate('astrology-calculators'); setCalcOpen(false); }} style={{ fontSize:12, color:'#F5C842', cursor:'pointer', fontWeight:600 }}>
+                      View All 20 Calculators →
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {linksRight.map(l => {
               const isActive = currentPage === l.id || currentPage.startsWith(l.id + '/');
               return (
                 <span key={l.id} onClick={() => navigate(l.id)} style={{
@@ -214,7 +302,47 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
       {/* Mobile dropdown */}
       {isMobile && mobileOpen && (
         <div style={{ background:'#0D1B3E', borderBottom:'1px solid rgba(245,200,66,0.2)', padding:'8px 0', position:'absolute', width:'100%', zIndex:399, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
-          {links.map(l => {
+          {linksLeft.map(l => {
+            const isActive = currentPage === l.id || currentPage.startsWith(l.id + '/');
+            return (
+              <div key={l.id} onClick={() => navigate(l.id)} style={{ padding:'13px 20px', fontSize:15, fontWeight:500, color: isActive ? '#F5C842' : 'rgba(253,246,236,0.8)', cursor:'pointer', borderLeft: isActive ? '3px solid #E8890C' : '3px solid transparent', transition:'all 150ms' }}>
+                {l.label}
+              </div>
+            );
+          })}
+
+          {/* Mobile Calculators accordion */}
+          <div>
+            <div onClick={() => setCalcMobileOpen(o => !o)} style={{
+              padding:'13px 20px', fontSize:15, fontWeight:500,
+              color: isCalcActive ? '#F5C842' : 'rgba(253,246,236,0.8)',
+              cursor:'pointer', borderLeft: isCalcActive ? '3px solid #E8890C' : '3px solid transparent',
+              display:'flex', alignItems:'center', justifyContent:'space-between',
+            }}>
+              <span>Calculators</span>
+              <span style={{ fontSize:11, opacity:0.6, marginRight:4, transition:'transform 200ms', transform: calcMobileOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            </div>
+            {calcMobileOpen && (
+              <div style={{ background:'rgba(0,0,0,0.2)', paddingBottom:4 }}>
+                <div onClick={() => navigate('astrology-calculators')} style={{ padding:'10px 20px 10px 32px', fontSize:13, color:'#F5C842', fontWeight:600, cursor:'pointer' }}>
+                  📊 All Calculators (Hub)
+                </div>
+                {calcMeta.map(c => (
+                  <div key={c.slug} onClick={() => navigate(c.slug)} style={{
+                    padding:'9px 20px 9px 32px', fontSize:13.5, fontWeight:500,
+                    color: currentPage === c.slug ? '#F5C842' : 'rgba(253,246,236,0.75)',
+                    cursor:'pointer', display:'flex', alignItems:'center', gap:10,
+                    borderLeft: currentPage === c.slug ? '3px solid #E8890C' : '3px solid transparent',
+                  }}>
+                    <span style={{ fontSize:16 }}>{c.icon}</span>
+                    <span>{c.title}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {linksRight.map(l => {
             const isActive = currentPage === l.id || currentPage.startsWith(l.id + '/');
             return (
               <div key={l.id} onClick={() => navigate(l.id)} style={{ padding:'13px 20px', fontSize:15, fontWeight:500, color: isActive ? '#F5C842' : 'rgba(253,246,236,0.8)', cursor:'pointer', borderLeft: isActive ? '3px solid #E8890C' : '3px solid transparent', transition:'all 150ms' }}>
