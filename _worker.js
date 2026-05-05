@@ -201,8 +201,6 @@ function pathnameToPageKey(pathname) {
   const p = pathname.replace(/^\//, '').replace(/\/$/, '');
   if (!p) return 'home';
   if (URL_TO_KEY[p]) return URL_TO_KEY[p];
-  const horoMatch = p.match(/^horoscope\/(weekly|monthly)\/(.+)$/);
-  if (horoMatch) return `horoscope/today/${horoMatch[2]}`;
   return p;
 }
 
