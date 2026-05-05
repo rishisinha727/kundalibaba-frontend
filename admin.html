@@ -677,11 +677,49 @@ function AstroShop() {
 
 // ── CMS / SEO ─────────────────────────────────────────────────
 const PAGE_DEFS = [
-  { key:'home',     name:'Home',             url:'/' },
-  { key:'kundali',  name:'Free Kundali',     url:'/free-kundali-online' },
-  { key:'matching', name:'Kundali Matching', url:'/kundali-matching-online' },
-  { key:'chat',     name:'Talk to Pandit',   url:'/chat-with-astrologer' },
-  { key:'shop',     name:'Gemstone Shop',    url:'/shop' },
+  // ── Main pages ──
+  { key:'home',                        name:'Home',                    url:'/',                              section:'Main' },
+  { key:'kundali',                     name:'Free Kundali',            url:'/kundali',                       section:'Main' },
+  { key:'matching',                    name:'Kundali Match',           url:'/matching',                      section:'Main' },
+  { key:'astrology-calculators',       name:'Calculators Hub',         url:'/astrology-calculators',         section:'Main' },
+  { key:'articles',                    name:'Articles Hub',            url:'/articles',                      section:'Main' },
+  { key:'chat',                        name:'Talk to Pandit',          url:'/chat',                          section:'Main' },
+  { key:'shop',                        name:'Gemstone Shop',           url:'/shop',                          section:'Main' },
+  // ── Horoscope ──
+  { key:'horoscope',                   name:'Horoscope (Hub)',         url:'/horoscope',                     section:'Horoscope' },
+  { key:'horoscope/aries',             name:'Aries',                   url:'/horoscope/aries',               section:'Horoscope' },
+  { key:'horoscope/taurus',            name:'Taurus',                  url:'/horoscope/taurus',              section:'Horoscope' },
+  { key:'horoscope/gemini',            name:'Gemini',                  url:'/horoscope/gemini',              section:'Horoscope' },
+  { key:'horoscope/cancer',            name:'Cancer',                  url:'/horoscope/cancer',              section:'Horoscope' },
+  { key:'horoscope/leo',               name:'Leo',                     url:'/horoscope/leo',                 section:'Horoscope' },
+  { key:'horoscope/virgo',             name:'Virgo',                   url:'/horoscope/virgo',               section:'Horoscope' },
+  { key:'horoscope/libra',             name:'Libra',                   url:'/horoscope/libra',               section:'Horoscope' },
+  { key:'horoscope/scorpio',           name:'Scorpio',                 url:'/horoscope/scorpio',             section:'Horoscope' },
+  { key:'horoscope/sagittarius',       name:'Sagittarius',             url:'/horoscope/sagittarius',         section:'Horoscope' },
+  { key:'horoscope/capricorn',         name:'Capricorn',               url:'/horoscope/capricorn',           section:'Horoscope' },
+  { key:'horoscope/aquarius',          name:'Aquarius',                url:'/horoscope/aquarius',            section:'Horoscope' },
+  { key:'horoscope/pisces',            name:'Pisces',                  url:'/horoscope/pisces',              section:'Horoscope' },
+  // ── Calculators ──
+  { key:'love-calculator-by-name',     name:'Love Calculator',         url:'/love-calculator-by-name',       section:'Calculators' },
+  { key:'flames-calculator',           name:'FLAMES Calculator',       url:'/flames-calculator',             section:'Calculators' },
+  { key:'friendship-calculator',       name:'Friendship Calculator',   url:'/friendship-calculator',         section:'Calculators' },
+  { key:'numerology-calculator',       name:'Numerology Calculator',   url:'/numerology-calculator',         section:'Calculators' },
+  { key:'lucky-vehicle-number-calculator', name:'Lucky Vehicle Number',url:'/lucky-vehicle-number-calculator',section:'Calculators' },
+  { key:'lo-shu-grid-calculator',      name:'Lo Shu Grid',             url:'/lo-shu-grid-calculator',        section:'Calculators' },
+  { key:'sun-sign-calculator',         name:'Sun Sign Calculator',     url:'/sun-sign-calculator',           section:'Calculators' },
+  { key:'moon-phase-calculator',       name:'Moon Phase Calculator',   url:'/moon-phase-calculator',         section:'Calculators' },
+  { key:'moon-sign-calculator',        name:'Moon Sign Calculator',    url:'/moon-sign-calculator',          section:'Calculators' },
+  { key:'ascendant-calculator',        name:'Ascendant Calculator',    url:'/ascendant-calculator',          section:'Calculators' },
+  { key:'nakshatra-calculator',        name:'Nakshatra Calculator',    url:'/nakshatra-calculator',          section:'Calculators' },
+  { key:'birth-chart-calculator',      name:'Birth Chart Generator',   url:'/birth-chart-calculator',        section:'Calculators' },
+  { key:'mangal-dosha-calculator',     name:'Mangal Dosha Calculator', url:'/mangal-dosha-calculator',       section:'Calculators' },
+  { key:'kaal-sarp-dosh-calculator',   name:'Kaal Sarp Dosh',          url:'/kaal-sarp-dosh-calculator',     section:'Calculators' },
+  { key:'sade-sati-calculator',        name:'Sade Sati Calculator',    url:'/sade-sati-calculator',          section:'Calculators' },
+  { key:'dasha-calculator',            name:'Dasha Calculator',        url:'/dasha-calculator',              section:'Calculators' },
+  { key:'atmakaraka-calculator',       name:'Atmakaraka Calculator',   url:'/atmakaraka-calculator',         section:'Calculators' },
+  { key:'ishta-devata-calculator',     name:'Ishta Devata Calculator', url:'/ishta-devata-calculator',       section:'Calculators' },
+  { key:'transit-chart-calculator',    name:'Transit Chart Calculator',url:'/transit-chart-calculator',      section:'Calculators' },
+  { key:'darakaraka-calculator',       name:'Darakaraka Calculator',   url:'/darakaraka-calculator',         section:'Calculators' },
 ];
 
 const API = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
@@ -824,27 +862,42 @@ function CMS() {
       {loading ? <div style={{ textAlign:'center', padding:48, color:'#9ca3af' }}>Loading...</div> : (<>
 
         {/* ── Fixed page SEO tab ── */}
-        {cmsTab === 'pages' && (
-          <div style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
-            <table>
-              <THead cols={['Page','URL','Meta Title','Meta Description','Actions']} />
-              <tbody>
-                {PAGE_DEFS.map(pd => {
-                  const s = seoData[pd.key] || {};
-                  return (
-                    <tr key={pd.key}>
-                      <TD style={{ fontWeight:700 }}>{pd.name}</TD>
-                      <TD><span style={{ fontFamily:'monospace', fontSize:12, color:C.saffron }}>{pd.url}</span></TD>
-                      <TD><span style={{ fontSize:12, color:s.metaTitle?'#374151':'#d1d5db' }}>{s.metaTitle||'— not set —'}</span></TD>
-                      <TD style={{ maxWidth:260 }}><span style={{ fontSize:12, color:s.metaDesc?'#374151':'#d1d5db' }}>{s.metaDesc?s.metaDesc.slice(0,55)+'…':'— not set —'}</span></TD>
-                      <TD><Btn variant="secondary" size="sm" onClick={() => openEditSeo(pd)}>✏ Edit SEO</Btn></TD>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {cmsTab === 'pages' && (() => {
+          const sections = [...new Set(PAGE_DEFS.map(p => p.section))];
+          return (
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              {sections.map(sec => (
+                <div key={sec} style={{ background:'white', borderRadius:14, border:'1px solid #f0f0f0', boxShadow:'0 1px 4px rgba(0,0,0,0.05)', overflow:'hidden' }}>
+                  <div style={{ background:'#f9fafb', padding:'10px 18px', borderBottom:'1px solid #f0f0f0', display:'flex', alignItems:'center', gap:10 }}>
+                    <span style={{ fontSize:13, fontWeight:700, color:'#374151' }}>{sec}</span>
+                    <span style={{ fontSize:11, color:'#9ca3af' }}>{PAGE_DEFS.filter(p=>p.section===sec).length} pages</span>
+                  </div>
+                  <table style={{ width:'100%' }}>
+                    <THead cols={['Page','URL','Meta Title','Meta Desc','Actions']} />
+                    <tbody>
+                      {PAGE_DEFS.filter(p => p.section === sec).map(pd => {
+                        const s = seoData[pd.key] || {};
+                        const done = !!(s.metaTitle && s.metaDesc);
+                        return (
+                          <tr key={pd.key}>
+                            <TD style={{ fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
+                              <span style={{ width:7, height:7, borderRadius:'50%', background: done ? '#22c55e' : '#e5e7eb', flexShrink:0, display:'inline-block' }} />
+                              {pd.name}
+                            </TD>
+                            <TD><span style={{ fontFamily:'monospace', fontSize:11, color:C.saffron }}>{pd.url}</span></TD>
+                            <TD><span style={{ fontSize:12, color:s.metaTitle?'#374151':'#d1d5db' }}>{s.metaTitle ? s.metaTitle.slice(0,40)+(s.metaTitle.length>40?'…':'') : '— not set —'}</span></TD>
+                            <TD style={{ maxWidth:220 }}><span style={{ fontSize:12, color:s.metaDesc?'#374151':'#d1d5db' }}>{s.metaDesc ? s.metaDesc.slice(0,50)+'…' : '— not set —'}</span></TD>
+                            <TD><Btn variant="secondary" size="sm" onClick={() => openEditSeo(pd)}>✏ Edit SEO</Btn></TD>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* ── Custom pages tab ── */}
         {cmsTab === 'custom' && (
