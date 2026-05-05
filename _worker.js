@@ -1,4 +1,6 @@
 const BACKEND = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
+const BASE    = 'https://kundalibaba.com';
+const TODAY   = new Date().toISOString().slice(0, 10);
 
 export default {
   async fetch(request, env, ctx) {
@@ -8,6 +10,12 @@ export default {
     if (url.pathname === '/admin' || url.pathname === '/admin/') {
       return env.ASSETS.fetch(new Request(new URL('/admin.html', url), request));
     }
+
+    // ── Sitemaps ────────────────────────────────────────────────────────────────
+    if (url.pathname === '/sitemap_index.xml')  return serveSitemapIndex(ctx);
+    if (url.pathname === '/sitemap_static.xml') return serveStaticSitemap();
+    if (url.pathname === '/sitemap_blog.xml')   return serveBlogSitemap(ctx);
+    if (url.pathname === '/sitemap_pages.xml')  return servePagesSitemap(ctx);
 
     // Only inject SEO for HTML document requests (skip assets)
     const accept = request.headers.get('accept') || '';
@@ -32,7 +40,157 @@ export default {
   },
 };
 
-// Pretty URL → internal page key mapping (mirrors PAGE_TO_URL in index.html)
+// ── Sitemap helpers ─────────────────────────────────────────────────────────────
+
+function xmlResponse(body) {
+  return new Response(body, {
+    headers: {
+      'content-type': 'application/xml; charset=utf-8',
+      'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',
+    },
+  });
+}
+
+function urlEntry(loc, { lastmod, changefreq, priority } = {}) {
+  return [
+    '  <url>',
+    `    <loc>${loc}</loc>`,
+    lastmod    ? `    <lastmod>${lastmod}</lastmod>` : '',
+    changefreq ? `    <changefreq>${changefreq}</changefreq>` : '',
+    priority   ? `    <priority>${priority}</priority>` : '',
+    '  </url>',
+  ].filter(Boolean).join('\n');
+}
+
+// ── sitemap_index.xml ───────────────────────────────────────────────────────────
+
+function serveSitemapIndex(ctx) {
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    `  <sitemap><loc>${BASE}/sitemap_static.xml</loc><lastmod>${TODAY}</lastmod></sitemap>`,
+    `  <sitemap><loc>${BASE}/sitemap_blog.xml</loc><lastmod>${TODAY}</lastmod></sitemap>`,
+    `  <sitemap><loc>${BASE}/sitemap_pages.xml</loc><lastmod>${TODAY}</lastmod></sitemap>`,
+    '</sitemapindex>',
+  ].join('\n');
+  return xmlResponse(xml);
+}
+
+// ── sitemap_static.xml — all hardcoded pages ────────────────────────────────────
+
+const RASHIS = ['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
+const CALC_SLUGS = [
+  'love-calculator-by-name','flames-calculator','friendship-calculator','numerology-calculator',
+  'lucky-vehicle-number-calculator','lo-shu-grid-calculator','sun-sign-calculator',
+  'moon-phase-calculator','moon-sign-calculator','ascendant-calculator','nakshatra-calculator',
+  'birth-chart-calculator','mangal-dosha-calculator','kaal-sarp-dosh-calculator',
+  'sade-sati-calculator','dasha-calculator','atmakaraka-calculator','ishta-devata-calculator',
+  'transit-chart-calculator','darakaraka-calculator',
+];
+
+function serveStaticSitemap() {
+  const entries = [];
+
+  // Main pages
+  entries.push(urlEntry(`${BASE}/`,                          { lastmod: TODAY, changefreq: 'daily',   priority: '1.0' }));
+  entries.push(urlEntry(`${BASE}/free-kundali-online`,       { lastmod: TODAY, changefreq: 'weekly',  priority: '0.9' }));
+  entries.push(urlEntry(`${BASE}/kundali-matching-online`,   { lastmod: TODAY, changefreq: 'weekly',  priority: '0.9' }));
+  entries.push(urlEntry(`${BASE}/horoscope`,                 { lastmod: TODAY, changefreq: 'daily',   priority: '0.9' }));
+  entries.push(urlEntry(`${BASE}/articles`,                  { lastmod: TODAY, changefreq: 'daily',   priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/astrology-calculators`,     { lastmod: TODAY, changefreq: 'weekly',  priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/chat-with-astrologer`,      { lastmod: TODAY, changefreq: 'weekly',  priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/shop`,                      { lastmod: TODAY, changefreq: 'weekly',  priority: '0.7' }));
+
+  // Horoscope category pages
+  entries.push(urlEntry(`${BASE}/horoscope/today`,   { lastmod: TODAY, changefreq: 'daily',   priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/weekly`,  { lastmod: TODAY, changefreq: 'weekly',  priority: '0.8' }));
+  entries.push(urlEntry(`${BASE}/horoscope/monthly`, { lastmod: TODAY, changefreq: 'monthly', priority: '0.8' }));
+
+  // Horoscope rashi pages — today / weekly / monthly
+  for (const rashi of RASHIS) {
+    entries.push(urlEntry(`${BASE}/horoscope/today/${rashi}`,   { lastmod: TODAY, changefreq: 'daily',   priority: '0.7' }));
+    entries.push(urlEntry(`${BASE}/horoscope/weekly/${rashi}`,  { lastmod: TODAY, changefreq: 'weekly',  priority: '0.6' }));
+    entries.push(urlEntry(`${BASE}/horoscope/monthly/${rashi}`, { lastmod: TODAY, changefreq: 'monthly', priority: '0.6' }));
+  }
+
+  // Calculator pages
+  for (const slug of CALC_SLUGS) {
+    entries.push(urlEntry(`${BASE}/${slug}`, { lastmod: TODAY, changefreq: 'monthly', priority: '0.7' }));
+  }
+
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...entries,
+    '</urlset>',
+  ].join('\n');
+  return xmlResponse(xml);
+}
+
+// ── sitemap_blog.xml — fetched dynamically ──────────────────────────────────────
+
+async function serveBlogSitemap(ctx) {
+  let items = [];
+  try {
+    const res = await fetch(`${BACKEND}/content/blogs?limit=1000`, {
+      cf: { cacheTtl: 3600, cacheEverything: true },
+    });
+    if (res.ok) {
+      const body = await res.json();
+      items = body?.data?.items || body?.data || [];
+    }
+  } catch {}
+
+  const entries = items
+    .filter(b => b.slug)
+    .map(b => urlEntry(`${BASE}/articles/${b.slug}`, {
+      lastmod:    (b.publishedAt || b.updatedAt || TODAY).slice(0, 10),
+      changefreq: 'weekly',
+      priority:   '0.6',
+    }));
+
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...entries,
+    '</urlset>',
+  ].join('\n');
+  return xmlResponse(xml);
+}
+
+// ── sitemap_pages.xml — fetched dynamically ─────────────────────────────────────
+
+async function servePagesSitemap(ctx) {
+  let items = [];
+  try {
+    const res = await fetch(`${BACKEND}/cms/custom-pages`, {
+      cf: { cacheTtl: 3600, cacheEverything: true },
+    });
+    if (res.ok) {
+      const body = await res.json();
+      items = body?.data || [];
+    }
+  } catch {}
+
+  const entries = items
+    .filter(p => p.slug && p.isPublished)
+    .map(p => urlEntry(`${BASE}/${p.slug}`, {
+      lastmod:    (p.updatedAt || TODAY).slice(0, 10),
+      changefreq: 'weekly',
+      priority:   '0.6',
+    }));
+
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...entries,
+    '</urlset>',
+  ].join('\n');
+  return xmlResponse(xml);
+}
+
+// ── SEO injection (unchanged) ───────────────────────────────────────────────────
+
 const URL_TO_KEY = {
   'free-kundali-online':     'kundali',
   'kundali-matching-online': 'matching',
@@ -42,10 +200,7 @@ const URL_TO_KEY = {
 function pathnameToPageKey(pathname) {
   const p = pathname.replace(/^\//, '').replace(/\/$/, '');
   if (!p) return 'home';
-  // Translate pretty URLs to internal keys
   if (URL_TO_KEY[p]) return URL_TO_KEY[p];
-  // Horoscope weekly/monthly sign pages fall back to today's sign key for SEO
-  // e.g. horoscope/weekly/aries → horoscope/today/aries
   const horoMatch = p.match(/^horoscope\/(weekly|monthly)\/(.+)$/);
   if (horoMatch) return `horoscope/today/${horoMatch[2]}`;
   return p;
@@ -98,11 +253,8 @@ function injectSeoMeta(html, seo) {
   const block = `<!-- SEO:CMS -->\n${tags.join('\n')}\n<!-- /SEO:CMS -->`;
 
   let result = html;
-  // Remove stale CMS block
   result = result.replace(/<!-- SEO:CMS -->[\s\S]*?<!-- \/SEO:CMS -->/g, '');
-  // Remove old <title> if we have a new one
   if (seo.metaTitle) result = result.replace(/<title>[^<]*<\/title>/, '');
-  // Inject before </head>
   result = result.replace('</head>', `${block}\n</head>`);
   return result;
 }
