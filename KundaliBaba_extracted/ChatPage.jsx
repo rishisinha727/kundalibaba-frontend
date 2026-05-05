@@ -222,7 +222,7 @@ function ChatPage({ onNavigate, tweaks }) {
       <div style={{ background:'linear-gradient(135deg,#060D20 0%,#0D1B3E 60%,#152855 100%)', padding:'48px 32px' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'#F5C842', marginBottom:10 }}>✦ 1200+ Verified Pandits</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:44, fontWeight:700, color:'white', margin:'0 0 10px' }}>Talk to a Pandit</h1>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:44, fontWeight:700, color:'white', margin:'0 0 10px' }}>Talk to a Pandit</h2>
           <p style={{ fontSize:15, color:'rgba(253,246,236,0.58)', margin:'0 0 28px', maxWidth:520 }}>
             Chat or video call with expert astrologers 24/7. First 3 minutes free on your first consultation.
           </p>

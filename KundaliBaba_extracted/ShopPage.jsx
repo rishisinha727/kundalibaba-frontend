@@ -32,7 +32,7 @@ function ShopPage({ onNavigate }) {
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(245,200,66,0.05) 1px, transparent 1px)', backgroundSize:'28px 28px', pointerEvents:'none' }} />
         <div style={{ maxWidth:1280, margin:'0 auto', position:'relative' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#F5C842', marginBottom:12 }}>✦ Certified & Energized</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 32 : 48, fontWeight:800, color:'white', margin:'0 0 14px', lineHeight:1.1 }}>Ratna &amp; Gemstone Shop</h1>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 32 : 48, fontWeight:800, color:'white', margin:'0 0 14px', lineHeight:1.1 }}>Ratna &amp; Gemstone Shop</h2>
           <p style={{ fontSize: isMobile ? 14 : 16, color:'rgba(253,246,236,0.6)', margin:'0 0 32px', maxWidth:520, lineHeight:1.7 }}>
             GIA/IGI certified gemstones sourced from verified vendors, energized by pandits during auspicious muhurat for maximum planetary benefit.
           </p>

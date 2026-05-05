@@ -174,7 +174,7 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
       <div style={{ background:'linear-gradient(135deg,#0D1B3E,#152855)', padding:'40px 32px 0' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'#F5C842', marginBottom:10 }}>✦ Vedic Astrology</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:42, fontWeight:700, color:'white', margin:'0 0 8px' }}>Free Kundali</h1>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:42, fontWeight:700, color:'white', margin:'0 0 8px' }}>Free Kundali</h2>
           <p style={{ fontSize:15, color:'rgba(253,246,236,0.55)', margin:'0 0 0' }}>Generate your complete Janam Kundali — planetary positions, Dasha & AI predictions.</p>
         </div>
         <SubNav />
@@ -319,7 +319,7 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', paddingBottom:0 }}>
             <div>
               <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'#F5C842', marginBottom:8 }}>✦ Your Kundali</div>
-              <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color:'white', margin:'0 0 6px' }}>{kundaliResult?.name || form.name || 'Your'} Kundali</h1>
+              <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color:'white', margin:'0 0 6px' }}>{kundaliResult?.name || form.name || 'Your'} Kundali</h2>
               <div style={{ fontSize:13, color:'rgba(253,246,236,0.5)' }}>
                 {kundaliResult?.dateOfBirth || [form.day, form.month, form.year].filter(Boolean).join('/')} · {kundaliResult?.timeOfBirth || [form.hour, form.min].filter(Boolean).join(':')} · {kundaliResult?.placeOfBirth || form.place}
               </div>
@@ -507,7 +507,7 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
       <div style={{ background:'linear-gradient(135deg,#0D1B3E,#152855)', padding:'40px 32px 0' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'#F5C842', marginBottom:10 }}>✦ 36-Gun Milan</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:42, fontWeight:700, color:'white', margin:'0 0 8px' }}>Kundali Matching</h1>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:42, fontWeight:700, color:'white', margin:'0 0 8px' }}>Kundali Matching</h2>
           <p style={{ fontSize:15, color:'rgba(253,246,236,0.55)', margin:0 }}>AI-powered Ashta Koota Milan for marriage compatibility analysis.</p>
         </div>
         <SubNav />
@@ -563,7 +563,7 @@ function KundaliPage({ onNavigate, tweaks, initialSubPage, onShowAuth }) {
       <div style={{ background:'linear-gradient(135deg,#0D1B3E,#152855)', padding:'40px 32px 0' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'#F5C842', marginBottom:10 }}>✦ Compatibility Report</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color:'white', margin:'0 0 4px' }}>Kundali Matching Report</h1>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color:'white', margin:'0 0 4px' }}>Kundali Matching Report</h2>
           <p style={{ fontSize:14, color:'rgba(253,246,236,0.5)', margin:0 }}>{boy.name || 'Boy'} &amp; {girl.name || 'Girl'}</p>
         </div>
         <SubNav />

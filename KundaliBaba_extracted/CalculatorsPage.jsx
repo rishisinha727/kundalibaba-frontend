@@ -217,7 +217,7 @@ function CalcLayout({ meta, children, onNavigate }) {
           <span style={{ fontSize:44 }}>{meta.icon}</span>
           <div>
             <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'#E8890C', marginBottom:4 }}>{meta.category}</div>
-            <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 24 : 32, fontWeight:800, color:'#0D1B3E', margin:0, lineHeight:1.2 }}>{meta.title}</h1>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 24 : 32, fontWeight:800, color:'#0D1B3E', margin:0, lineHeight:1.2 }}>{meta.title}</h2>
           </div>
         </div>
         <p style={{ fontSize:14, color:'#6B4C2A', marginBottom:32, lineHeight:1.7 }}>{meta.shortDesc}</p>
@@ -1041,9 +1041,9 @@ function CalculatorsHub({ onNavigate }) {
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(245,200,66,0.05) 1px, transparent 1px)', backgroundSize:'30px 30px', pointerEvents:'none' }} />
         <div style={{ maxWidth:860, margin:'0 auto', textAlign:'center', position:'relative' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.16em', textTransform:'uppercase', color:'#F5C842', marginBottom:14 }}>✦ Vedic Astrology Tools</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile?28:52, fontWeight:800, color:'white', lineHeight:1.15, margin:'0 0 16px' }}>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile?28:52, fontWeight:800, color:'white', lineHeight:1.15, margin:'0 0 16px' }}>
             Free Astrology Calculators
-          </h1>
+          </h2>
           <p style={{ fontSize: isMobile?14:17, color:'rgba(253,246,236,0.7)', lineHeight:1.75, maxWidth:600, margin:'0 auto', marginBottom:0 }}>
             20 free Vedic astrology tools — from numerology and love compatibility to birth charts, doshas, and planetary dashas.
           </p>

@@ -126,7 +126,7 @@ function RashiDetailPage({ rashiSlug, period, onNavigate }) {
             <span style={{ fontSize: isMobile ? 56 : 72 }}>{rashi.icon}</span>
             <div>
               <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#F5C842', marginBottom:6 }}>{rashi.symbol} {rashi.hindi} Rashi</div>
-              <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 36 : 52, fontWeight:800, color:'white', margin:'0 0 6px', lineHeight:1.1 }}>{rashi.name}</h1>
+              <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 36 : 52, fontWeight:800, color:'white', margin:'0 0 6px', lineHeight:1.1 }}>{rashi.name}</h2>
               <div style={{ fontSize:13, color:'rgba(253,246,236,0.6)' }}>{rashi.dates} · {rashi.element} · Ruled by {rashi.lord}</div>
             </div>
           </div>
@@ -231,9 +231,9 @@ function HoroscopeListPage({ period, onNavigate }) {
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(245,200,66,0.04) 1px, transparent 1px)', backgroundSize:'28px 28px', pointerEvents:'none' }} />
         <div style={{ maxWidth:1280, margin:'0 auto', position:'relative' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#F5C842', marginBottom:12 }}>✦ Vedic Astrology</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 32 : 48, fontWeight:800, color:'white', margin:'0 0 10px', lineHeight:1.1 }}>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 32 : 48, fontWeight:800, color:'white', margin:'0 0 10px', lineHeight:1.1 }}>
             {PERIOD_LABEL[period] || period} Horoscope
-          </h1>
+          </h2>
           <p style={{ fontSize:14, color:'rgba(253,246,236,0.6)', margin:'0 0 28px', maxWidth:520 }}>
             {period==='today' ? "What does today hold for your rashi? Read your personalized Vedic prediction." :
              period==='weekly' ? "Your week ahead — love, career, health and spiritual growth by rashi." :
@@ -282,7 +282,7 @@ function HoroscopeHubPage({ onNavigate }) {
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(245,200,66,0.04) 1px, transparent 1px)', backgroundSize:'28px 28px', pointerEvents:'none' }} />
         <div style={{ maxWidth:1280, margin:'0 auto', position:'relative', textAlign:'center' }}>
           <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#F5C842', marginBottom:12 }}>✦ Vedic Astrology · 12 Rashis</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 34 : 54, fontWeight:800, color:'white', margin:'0 0 14px', lineHeight:1.1 }}>Today's Horoscope</h1>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 34 : 54, fontWeight:800, color:'white', margin:'0 0 14px', lineHeight:1.1 }}>Today's Horoscope</h2>
           <p style={{ fontSize: isMobile ? 14 : 16, color:'rgba(253,246,236,0.6)', margin:'0 auto 32px', maxWidth:520, lineHeight:1.7 }}>
             Free today's, weekly & monthly horoscope for all 12 rashis based on Vedic astrology principles.
           </p>
