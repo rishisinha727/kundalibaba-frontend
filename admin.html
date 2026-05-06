@@ -1157,20 +1157,45 @@ function CMS() {
 const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGN_ICONS = { Aries:'🐏',Taurus:'🐂',Gemini:'👯',Cancer:'🦀',Leo:'🦁',Virgo:'👧',Libra:'⚖️',Scorpio:'🦂',Sagittarius:'🏹',Capricorn:'🐐',Aquarius:'🏺',Pisces:'🐟' };
 
+// Returns ISO date string offset from today (for yesterday/tomorrow API calls)
+function horoDateFor(period) {
+  const d = new Date();
+  if (period === 'yesterday') d.setDate(d.getDate() - 1);
+  if (period === 'tomorrow')  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+const HORO_PERIODS = [
+  { key:'yesterday', label:'Yesterday' },
+  { key:'daily',     label:'Today'     },
+  { key:'tomorrow',  label:'Tomorrow'  },
+  { key:'weekly',    label:'Weekly'    },
+  { key:'monthly',   label:'Monthly'   },
+];
+
+// Maps tab key → API period param
+function horoApiPeriod(p) {
+  if (p === 'yesterday' || p === 'tomorrow') return 'daily';
+  return p;
+}
+
 function Horoscopes() {
   const [period, setPeriod] = React.useState('daily');
   const [data, setData] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const [seeding, setSeeding] = React.useState(false);
   const [saving, setSaving] = React.useState(null);
-  const [editing, setEditing] = React.useState(null); // { sign, period, content, lucky }
+  const [editing, setEditing] = React.useState(null); // { sign, period, date, content, lucky }
   const [toast, setToast] = React.useState('');
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
   const load = React.useCallback(() => {
     setLoading(true);
-    fetch(`${API}/content/horoscopes?period=${period}`)
+    const apiPeriod = horoApiPeriod(period);
+    const date = (period === 'yesterday' || period === 'tomorrow') ? horoDateFor(period) : '';
+    const url = `${API}/content/horoscopes?period=${apiPeriod}${date ? `&date=${date}` : ''}`;
+    fetch(url)
       .then(r => r.json())
       .then(r => {
         const map = {};
@@ -1199,10 +1224,12 @@ function Horoscopes() {
     if (!editing) return;
     setSaving(editing.sign);
     try {
+      const body = { period: horoApiPeriod(editing.period), content: editing.content, lucky: editing.lucky };
+      if (editing.period === 'yesterday' || editing.period === 'tomorrow') body.date = horoDateFor(editing.period);
       const r = await fetch(`${API}/content/horoscopes/${editing.sign}`, {
         method:'PUT',
         headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${Auth.getToken()}` },
-        body: JSON.stringify({ period: editing.period, content: editing.content, lucky: editing.lucky }),
+        body: JSON.stringify(body),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.message);
@@ -1218,20 +1245,22 @@ function Horoscopes() {
     setEditing({ sign, period, content: h.content || '', lucky: h.lucky || { number:'', color:'', day:'' } });
   };
 
+  const periodLabel = HORO_PERIODS.find(p => p.key === period)?.label || period;
+
   return (
     <div>
-      <PageHeader title="Horoscopes" sub="Manage daily, weekly & monthly horoscope content for all 12 rashis"
+      <PageHeader title="Horoscopes" sub="Manage horoscope content for all 12 rashis — yesterday, today, tomorrow, weekly & monthly"
         action={<Btn onClick={seed} disabled={seeding}>{seeding ? 'Seeding…' : '🌱 Seed All Content'}</Btn>} />
 
       {toast && <div style={{ background:'#0D1B3E', color:'white', padding:'10px 20px', borderRadius:8, marginBottom:16, fontSize:13 }}>{toast}</div>}
 
       {/* Period tabs */}
-      <div style={{ display:'flex', gap:8, marginBottom:24 }}>
-        {['daily','weekly','monthly'].map(p => (
-          <button key={p} onClick={() => setPeriod(p)}
+      <div style={{ display:'flex', gap:8, marginBottom:24, flexWrap:'wrap' }}>
+        {HORO_PERIODS.map(({ key, label }) => (
+          <button key={key} onClick={() => setPeriod(key)}
             style={{ padding:'8px 20px', borderRadius:999, border:'1.5px solid', fontFamily:'inherit', fontWeight:600, fontSize:13, cursor:'pointer',
-              background: period===p ? '#E8890C' : 'white', borderColor: period===p ? '#E8890C' : '#e5e7eb', color: period===p ? 'white' : '#374151' }}>
-            {p.charAt(0).toUpperCase()+p.slice(1)}
+              background: period===key ? '#E8890C' : 'white', borderColor: period===key ? '#E8890C' : '#e5e7eb', color: period===key ? 'white' : '#374151' }}>
+            {label}
           </button>
         ))}
         <button onClick={load} style={{ marginLeft:'auto', padding:'8px 16px', borderRadius:8, border:'1px solid #e5e7eb', background:'white', fontSize:13, cursor:'pointer' }}>↺ Refresh</button>
@@ -1276,7 +1305,7 @@ function Horoscopes() {
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
           <div style={{ background:'white', borderRadius:16, width:'100%', maxWidth:600, padding:28, boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-              <div style={{ fontSize:17, fontWeight:700 }}>{SIGN_ICONS[editing.sign]} {editing.sign} — {editing.period.charAt(0).toUpperCase()+editing.period.slice(1)}</div>
+              <div style={{ fontSize:17, fontWeight:700 }}>{SIGN_ICONS[editing.sign]} {editing.sign} — {HORO_PERIODS.find(p => p.key === editing.period)?.label || editing.period}</div>
               <button onClick={() => setEditing(null)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'#9ca3af' }}>×</button>
             </div>
             <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#374151', marginBottom:5 }}>Horoscope Content *</label>
