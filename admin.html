@@ -1209,12 +1209,12 @@ function Horoscopes() {
   React.useEffect(() => { load(); }, [load]);
 
   const seed = async () => {
-    if (!confirm('This will populate all 12 signs × 3 periods with real horoscope content. Continue?')) return;
+    if (!confirm('Seed Tomorrow + Weekly + Monthly content for all 12 signs?\n\nTomorrow\'s content will automatically become Today → Yesterday as days pass.')) return;
     setSeeding(true);
     try {
       const r = await fetch(`${API}/content/horoscopes/seed`, { method:'POST', headers:{ Authorization:`Bearer ${Auth.getToken()}` } });
       const j = await r.json();
-      showToast(j.message || 'Seeded!');
+      showToast(j.message || 'Seeded Tomorrow + Weekly + Monthly!');
       load();
     } catch { showToast('Seed failed'); }
     setSeeding(false);
@@ -1249,8 +1249,8 @@ function Horoscopes() {
 
   return (
     <div>
-      <PageHeader title="Horoscopes" sub="Manage horoscope content for all 12 rashis — yesterday, today, tomorrow, weekly & monthly"
-        action={<Btn onClick={seed} disabled={seeding}>{seeding ? 'Seeding…' : '🌱 Seed All Content'}</Btn>} />
+      <PageHeader title="Horoscopes" sub="Seed seeds Tomorrow + Weekly + Monthly. Today & Yesterday auto-populate from previous seeds."
+        action={<Btn onClick={seed} disabled={seeding}>{seeding ? 'Seeding…' : '🌱 Seed Tomorrow + Weekly + Monthly'}</Btn>} />
 
       {toast && <div style={{ background:'#0D1B3E', color:'white', padding:'10px 20px', borderRadius:8, marginBottom:16, fontSize:13 }}>{toast}</div>}
 
