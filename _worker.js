@@ -11,6 +11,15 @@ export default {
       return env.ASSETS.fetch(new Request(new URL('/admin.html', url), request));
     }
 
+    // ── robots.txt — serve as plain text (never as HTML) ────────────────────────
+    if (url.pathname === '/robots.txt') {
+      const r = await env.ASSETS.fetch(request);
+      const headers = new Headers(r.headers);
+      headers.set('content-type', 'text/plain; charset=utf-8');
+      headers.set('cache-control', 'public, max-age=86400');
+      return new Response(r.body, { status: r.status, headers });
+    }
+
     // ── Sitemaps ────────────────────────────────────────────────────────────────
     if (url.pathname === '/sitemap_index.xml')  return serveSitemapIndex(ctx);
     if (url.pathname === '/sitemap_static.xml') return serveStaticSitemap();
