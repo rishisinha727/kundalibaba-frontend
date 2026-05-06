@@ -1,18 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
-  <!-- Background -->
+
+  <!-- Deep navy background -->
   <rect width="180" height="180" rx="32" fill="#0D1B3E"/>
 
-  <!-- Outer ring -->
-  <circle cx="90" cy="90" r="78" stroke="#E8890C" stroke-width="3" fill="none" opacity="0.5"/>
+  <!-- Outer ring — kesariya -->
+  <circle cx="90" cy="90" r="82" stroke="#FF6600" stroke-width="3" fill="none" opacity="0.6"/>
 
-  <!-- Hindu Swastika (卐) clockwise, centered, proportional for 180×180 -->
-  <!-- inner corners at ±17 from center (73/107), outer edges at ±49 (41/139) -->
-  <path d="M 73,41 L 107,41 L 107,73 L 139,73 L 139,107 L 107,107 L 107,139 L 73,139 L 73,107 L 41,107 L 41,73 L 73,73 Z"
-        fill="#F5C842"/>
+  <!--
+    Hindu Swastika (卐) clockwise, scaled for 180×180
+    Center 90,90 | Arm width 28 | Arm reach 53 | Hook 39
+    (proportionally identical to favicon.svg)
+  -->
+  <path d="
+    M 76,37  L 104,37
+    L 104,76  L 143,76
+    L 143,104 L 104,104
+    L 104,143 L 76,143
+    L 76,104  L 37,104
+    L 37,76   L 76,76
+    Z"
+    fill="#FF6600"
+  />
 
-  <!-- Cardinal dots -->
-  <circle cx="90" cy="13"  r="5" fill="#F5C842"/>
-  <circle cx="90" cy="167" r="5" fill="#F5C842"/>
-  <circle cx="13" cy="90"  r="5" fill="#F5C842"/>
-  <circle cx="167" cy="90" r="5" fill="#F5C842"/>
+  <!-- Traditional four quadrant dots -->
+  <circle cx="56"  cy="56"  r="7" fill="#FFB300"/>
+  <circle cx="124" cy="56"  r="7" fill="#FFB300"/>
+  <circle cx="124" cy="124" r="7" fill="#FFB300"/>
+  <circle cx="56"  cy="124" r="7" fill="#FFB300"/>
+
+  <!-- Cardinal ring dots -->
+  <circle cx="90"  cy="9"   r="5" fill="#FFB300"/>
+  <circle cx="90"  cy="171" r="5" fill="#FFB300"/>
+  <circle cx="9"   cy="90"  r="5" fill="#FFB300"/>
+  <circle cx="171" cy="90"  r="5" fill="#FFB300"/>
+
 </svg>
