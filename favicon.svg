@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Navy rounded-square background -->
+  <rect width="64" height="64" rx="12" fill="#0D1B3E"/>
+
+  <!-- Outer ring — matches logo mark style -->
+  <circle cx="32" cy="32" r="28" stroke="#E8890C" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+  <!-- Hindu Swastika (卐) clockwise — gold, centered in 64×64 -->
+  <!-- Arms: inner corners at ±6 from center (26/38), outer edges at ±18 (14/50) -->
+  <!-- Arm width = 12, hook length = 12 — balanced for small sizes -->
+  <path d="M 26,14 L 38,14 L 38,26 L 50,26 L 50,38 L 38,38 L 38,50 L 26,50 L 26,38 L 14,38 L 14,26 L 26,26 Z"
+        fill="#F5C842"/>
+
+  <!-- Cardinal dots — matching logo mark -->
+  <circle cx="32" cy="5"  r="2" fill="#F5C842"/>
+  <circle cx="32" cy="59" r="2" fill="#F5C842"/>
+  <circle cx="5"  cy="32" r="2" fill="#F5C842"/>
+  <circle cx="59" cy="32" r="2" fill="#F5C842"/>
+</svg>

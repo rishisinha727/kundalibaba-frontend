@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <!-- Background -->
+  <rect width="180" height="180" rx="32" fill="#0D1B3E"/>
+
+  <!-- Outer ring -->
+  <circle cx="90" cy="90" r="78" stroke="#E8890C" stroke-width="3" fill="none" opacity="0.5"/>
+
+  <!-- Hindu Swastika (卐) clockwise, centered, proportional for 180×180 -->
+  <!-- inner corners at ±17 from center (73/107), outer edges at ±49 (41/139) -->
+  <path d="M 73,41 L 107,41 L 107,73 L 139,73 L 139,107 L 107,107 L 107,139 L 73,139 L 73,107 L 41,107 L 41,73 L 73,73 Z"
+        fill="#F5C842"/>
+
+  <!-- Cardinal dots -->
+  <circle cx="90" cy="13"  r="5" fill="#F5C842"/>
+  <circle cx="90" cy="167" r="5" fill="#F5C842"/>
+  <circle cx="13" cy="90"  r="5" fill="#F5C842"/>
+  <circle cx="167" cy="90" r="5" fill="#F5C842"/>
+</svg>
