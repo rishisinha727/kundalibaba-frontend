@@ -1,37 +1,55 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
 
-  <!-- Deep navy background -->
+  <!-- Navy background -->
   <rect width="64" height="64" rx="12" fill="#0D1B3E"/>
 
-  <!-- Decorative outer ring — kesariya saffron -->
-  <circle cx="32" cy="32" r="29" stroke="#FF6600" stroke-width="1.5" fill="none" opacity="0.6"/>
-
   <!--
-    Hindu Swastika (卐) — clockwise (Vedic tradition)
-    Center 32,32 | Arm width 10 | Arm reach 19 | Hook 14
-    Top hook → RIGHT | Right hook → DOWN | Bottom hook → LEFT | Left hook → UP
+    Hindu Swastika (卐) — stroke-drawn style, clockwise, like the reference image
+    Drawn as individual thick line segments with square caps so each stroke
+    creates clean right-angle hook junctions exactly as in traditional depictions.
+
+    Arm reach from center: 19px   Arm center-line positions:
+      Top end:    (32, 13)        Left end:   (13, 32)
+      Right end:  (51, 32)        Bottom end: (32, 51)
+
+    Hook directions (clockwise / Hindu):
+      Top arm    → hook RIGHT  to x=51
+      Right arm  → hook DOWN   to y=51
+      Bottom arm → hook LEFT   to x=13
+      Left arm   → hook UP     to y=13
   -->
-  <path d="
-    M 27,13 L 37,13
-    L 37,27 L 51,27
-    L 51,37 L 37,37
-    L 37,51 L 27,51
-    L 27,37 L 13,37
-    L 13,27 L 27,27
-    Z"
-    fill="#FF6600"
-  />
 
-  <!-- Traditional four quadrant dots (Hindu mythology — Shubh Labh) -->
-  <circle cx="20" cy="20" r="2.8" fill="#FFB300"/>
-  <circle cx="44" cy="20" r="2.8" fill="#FFB300"/>
-  <circle cx="44" cy="44" r="2.8" fill="#FFB300"/>
-  <circle cx="20" cy="44" r="2.8" fill="#FFB300"/>
+  <!-- Vertical bar of the cross -->
+  <line x1="32" y1="13" x2="32" y2="51"
+        stroke="#FF6600" stroke-width="11" stroke-linecap="square"/>
 
-  <!-- Cardinal ring dots — golden -->
-  <circle cx="32" cy="3"  r="1.8" fill="#FFB300"/>
-  <circle cx="32" cy="61" r="1.8" fill="#FFB300"/>
-  <circle cx="3"  cy="32" r="1.8" fill="#FFB300"/>
-  <circle cx="61" cy="32" r="1.8" fill="#FFB300"/>
+  <!-- Horizontal bar of the cross -->
+  <line x1="13" y1="32" x2="51" y2="32"
+        stroke="#FF6600" stroke-width="11" stroke-linecap="square"/>
+
+  <!-- Hook on top arm → RIGHT (from x=32 rightward to x=51) -->
+  <line x1="32" y1="13" x2="51" y2="13"
+        stroke="#FF6600" stroke-width="11" stroke-linecap="square"/>
+
+  <!-- Hook on right arm → DOWN (from y=32 downward to y=51) -->
+  <line x1="51" y1="32" x2="51" y2="51"
+        stroke="#FF6600" stroke-width="11" stroke-linecap="square"/>
+
+  <!-- Hook on bottom arm → LEFT (from x=32 leftward to x=13) -->
+  <line x1="32" y1="51" x2="13" y2="51"
+        stroke="#FF6600" stroke-width="11" stroke-linecap="square"/>
+
+  <!-- Hook on left arm → UP (from y=32 upward to y=13) -->
+  <line x1="13" y1="32" x2="13" y2="13"
+        stroke="#FF6600" stroke-width="11" stroke-linecap="square"/>
+
+  <!-- Central dot — orange/amber like the reference image -->
+  <circle cx="32" cy="32" r="4.5" fill="#FFB300"/>
+
+  <!-- Four traditional quadrant dots (Shubh Labh) -->
+  <circle cx="44" cy="21" r="2.8" fill="#FFB300"/>
+  <circle cx="44" cy="43" r="2.8" fill="#FFB300"/>
+  <circle cx="20" cy="43" r="2.8" fill="#FFB300"/>
+  <circle cx="20" cy="21" r="2.8" fill="#FFB300"/>
 
 </svg>

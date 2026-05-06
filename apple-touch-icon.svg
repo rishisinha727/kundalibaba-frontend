@@ -1,37 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
 
-  <!-- Deep navy background -->
+  <!-- Navy background -->
   <rect width="180" height="180" rx="32" fill="#0D1B3E"/>
 
-  <!-- Outer ring — kesariya -->
-  <circle cx="90" cy="90" r="82" stroke="#FF6600" stroke-width="3" fill="none" opacity="0.6"/>
-
   <!--
-    Hindu Swastika (卐) clockwise, scaled for 180×180
-    Center 90,90 | Arm width 28 | Arm reach 53 | Hook 39
-    (proportionally identical to favicon.svg)
+    Hindu Swastika (卐) — clockwise, kesariya, no ring
+    Scaled from 64→180 (factor ~2.81)
+    Bar ends: 13→37, 51→143 (reach ±51 from center 90)
+    stroke-width: 11 × 2.81 ≈ 31
   -->
-  <path d="
-    M 76,37  L 104,37
-    L 104,76  L 143,76
-    L 143,104 L 104,104
-    L 104,143 L 76,143
-    L 76,104  L 37,104
-    L 37,76   L 76,76
-    Z"
-    fill="#FF6600"
-  />
+  <line x1="90" y1="37"  x2="90"  y2="143" stroke="#FF6600" stroke-width="31" stroke-linecap="square"/>
+  <line x1="37" y1="90"  x2="143" y2="90"  stroke="#FF6600" stroke-width="31" stroke-linecap="square"/>
+  <line x1="90" y1="37"  x2="143" y2="37"  stroke="#FF6600" stroke-width="31" stroke-linecap="square"/>
+  <line x1="143" y1="90" x2="143" y2="143" stroke="#FF6600" stroke-width="31" stroke-linecap="square"/>
+  <line x1="90"  y1="143" x2="37" y2="143" stroke="#FF6600" stroke-width="31" stroke-linecap="square"/>
+  <line x1="37"  y1="90"  x2="37" y2="37"  stroke="#FF6600" stroke-width="31" stroke-linecap="square"/>
 
-  <!-- Traditional four quadrant dots -->
-  <circle cx="56"  cy="56"  r="7" fill="#FFB300"/>
-  <circle cx="124" cy="56"  r="7" fill="#FFB300"/>
-  <circle cx="124" cy="124" r="7" fill="#FFB300"/>
-  <circle cx="56"  cy="124" r="7" fill="#FFB300"/>
+  <!-- Central dot -->
+  <circle cx="90" cy="90" r="13" fill="#FFB300"/>
 
-  <!-- Cardinal ring dots -->
-  <circle cx="90"  cy="9"   r="5" fill="#FFB300"/>
-  <circle cx="90"  cy="171" r="5" fill="#FFB300"/>
-  <circle cx="9"   cy="90"  r="5" fill="#FFB300"/>
-  <circle cx="171" cy="90"  r="5" fill="#FFB300"/>
+  <!-- Four traditional quadrant dots -->
+  <circle cx="124" cy="59"  r="8" fill="#FFB300"/>
+  <circle cx="124" cy="121" r="8" fill="#FFB300"/>
+  <circle cx="56"  cy="121" r="8" fill="#FFB300"/>
+  <circle cx="56"  cy="59"  r="8" fill="#FFB300"/>
 
 </svg>

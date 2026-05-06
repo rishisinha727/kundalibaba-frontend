@@ -161,9 +161,14 @@ function KBNav({ currentPage, onNavigate, tweaks, user, onSignIn, onLogout }) {
         {/* Logo */}
         <div onClick={() => navigate('home')} style={{ display:'flex', alignItems:'center', gap:8, marginRight: isMobile ? 0 : 40, cursor:'pointer', flexShrink:0 }}>
           <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="29" stroke="#E8890C" strokeWidth="2" fill="none" opacity="0.4"/>
-            <polygon points="32,6 35.5,24 50,16 40,29 56,32 40,35 50,48 35.5,40 32,58 28.5,40 14,48 24,35 8,32 24,29 14,16 28.5,24" fill="#E8890C" opacity="0.9"/>
-            <circle cx="32" cy="32" r="5" fill="#F5C842"/>
+            {/* Hindu Swastika (卐) — clockwise, kesariya, no ring */}
+            <line x1="32" y1="13" x2="32" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="13" y1="32" x2="51" y2="32" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="32" y1="13" x2="51" y2="13" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="51" y1="32" x2="51" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="32" y1="51" x2="13" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="13" y1="32" x2="13" y2="13" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <circle cx="32" cy="32" r="4.5" fill="#FFB300"/>
           </svg>
           <span style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? 17 : 19, fontWeight:700, color:'#F5C842', letterSpacing:'-0.2px' }}>Kundalibaba</span>
         </div>
@@ -377,8 +382,13 @@ function KBFooter({ onNavigate }) {
           <div>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
               <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
-                <polygon points="32,6 35.5,24 50,16 40,29 56,32 40,35 50,48 35.5,40 32,58 28.5,40 14,48 24,35 8,32 24,29 14,16 28.5,24" fill="#E8890C" opacity="0.9"/>
-                <circle cx="32" cy="32" r="5" fill="#F5C842"/>
+                <line x1="32" y1="13" x2="32" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+                <line x1="13" y1="32" x2="51" y2="32" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+                <line x1="32" y1="13" x2="51" y2="13" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+                <line x1="51" y1="32" x2="51" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+                <line x1="32" y1="51" x2="13" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+                <line x1="13" y1="32" x2="13" y2="13" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+                <circle cx="32" cy="32" r="4.5" fill="#FFB300"/>
               </svg>
               <span style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:'#F5C842' }}>Kundalibaba</span>
             </div>
