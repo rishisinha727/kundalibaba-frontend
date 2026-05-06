@@ -20,7 +20,7 @@ const RASHIS = [
   { slug:'pisces',      name:'Pisces',      hindi:'Meen',       symbol:'♓', element:'Water', lord:'Jupiter', dates:'Feb 19 – Mar 20', icon:'🐟', color:'#285E61' },
 ];
 
-const PERIODS     = ['yesterday', 'today', 'weekly', 'monthly', 'tomorrow'];
+const PERIODS     = ['yesterday', 'today', 'tomorrow', 'weekly', 'monthly'];
 const HUB_PERIODS = ['today', 'weekly', 'monthly'];
 const BACKEND     = 'https://kundalibaba-backend-production.up.railway.app/api/v1';
 
