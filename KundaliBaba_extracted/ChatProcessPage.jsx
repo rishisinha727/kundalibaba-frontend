@@ -7,34 +7,55 @@
 const ADMIN_API   = (window.KBApi && window.KBApi.BASE) || 'https://kundalibaba-backend-production.up.railway.app/api/v1';
 const ADMIN_EMAIL = 'rishisinha727@gmail.com';
 
-// ── Auth Gate — shown if user is not logged in or not the admin ───────────────
-function AdminAuthGate({ onSuccess }) {
+// ── Access Denied screen ──────────────────────────────────────────────────────
+function AccessDenied() {
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0D1B3E 0%, #1a2d5a 100%)',
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 20, padding: '48px 40px', width: '100%', maxWidth: 380,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.3)', textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🚫</div>
+        <h2 style={{ margin: '0 0 10px', fontSize: 24, fontWeight: 800, color: '#0D1B3E' }}>
+          Access Denied
+        </h2>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
+          You do not have permission to access this page.
+        </p>
+        <div style={{ fontSize: 11, color: '#94a3b8' }}>
+          🔒 Restricted area
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Auth Gate — shown if user is not logged in ────────────────────────────────
+function AdminAuthGate({ onSuccess, onDenied }) {
   const [loading, setLoading] = React.useState(false);
-  const [error, setError]     = React.useState('');
   const [status, setStatus]   = React.useState('loading');
   const containerRef          = React.useRef(null);
 
   React.useEffect(() => {
-    // Reuse the same Google Client ID as the main site
     const CLIENT_ID = '112774249048-rfnms6tnvqi4d6gcaureisbqfd2jb7de.apps.googleusercontent.com';
 
     window.__adminGoogleCallback = async (response) => {
       setLoading(true);
-      setError('');
       try {
         const res = await window.KBApi.googleLogin(response.credential);
         const user = res.data.user;
         if (user.email !== ADMIN_EMAIL) {
-          setError(`Access denied. This dashboard is restricted to ${ADMIN_EMAIL}.`);
-          setLoading(false);
+          onDenied(); // wrong email → show Access Denied screen
           return;
         }
         window.Auth.setToken(res.data.accessToken);
         window.Auth.setRefresh(res.data.refreshToken);
         window.Auth.setUser(user);
         onSuccess(user);
-      } catch (e) {
-        setError(e.message || 'Sign-in failed. Please try again.');
+      } catch {
         setLoading(false);
       }
     };
@@ -49,15 +70,11 @@ function AdminAuthGate({ onSuccess }) {
             theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 300,
           });
           setStatus('ready');
-        } catch {
-          setStatus('error');
-          setError('Google Sign-In failed to load. Please refresh.');
-        }
+        } catch { setStatus('error'); }
       } else if (attempts < 40) {
         setTimeout(tryRender, 250);
       } else {
         setStatus('error');
-        setError('Google Sign-In could not load. Please refresh the page.');
       }
     };
     setTimeout(tryRender, 400);
@@ -74,7 +91,7 @@ function AdminAuthGate({ onSuccess }) {
         boxShadow: '0 24px 64px rgba(0,0,0,0.3)', textAlign: 'center',
       }}>
         {/* Logo */}
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 12 }}>
           <svg width="40" height="40" viewBox="0 0 64 64" fill="none" style={{ display: 'inline-block' }}>
             <rect width="64" height="64" rx="12" fill="#0D1B3E"/>
             <line x1="32" y1="13" x2="32" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
@@ -86,7 +103,6 @@ function AdminAuthGate({ onSuccess }) {
             <circle cx="32" cy="32" r="4.5" fill="#FFB300"/>
           </svg>
         </div>
-
         <h2 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 800, color: '#0D1B3E' }}>
           Admin Dashboard
         </h2>
@@ -98,14 +114,6 @@ function AdminAuthGate({ onSuccess }) {
           <div style={{ fontSize: 13, color: '#FF6600', marginBottom: 16 }}>Verifying…</div>
         )}
 
-        {error && (
-          <div style={{
-            background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10,
-            padding: '12px 16px', fontSize: 13, color: '#dc2626', marginBottom: 16, lineHeight: 1.5,
-          }}>{error}</div>
-        )}
-
-        {/* Google button */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           {status === 'loading' && !loading && (
             <div style={{
@@ -117,7 +125,7 @@ function AdminAuthGate({ onSuccess }) {
           <div ref={containerRef} />
         </div>
 
-        <div style={{ fontSize: 11, color: '#cbd5e1' }}>
+        <div style={{ fontSize: 11, color: '#94a3b8' }}>
           🔒 Only authorised personnel can access this page
         </div>
       </div>
@@ -235,11 +243,10 @@ function ChatProcessPage({ onNavigate }) {
     const u = window.Auth && window.Auth.getUser ? window.Auth.getUser() : null;
     return (u && u.email === ADMIN_EMAIL) ? u : null;
   });
+  const [denied, setDenied] = React.useState(false);
 
-  // If not authenticated as admin, show login gate
-  if (!adminUser) {
-    return <AdminAuthGate onSuccess={(u) => setAdminUser(u)} />;
-  }
+  if (denied)      return <AccessDenied />;
+  if (!adminUser)  return <AdminAuthGate onSuccess={(u) => setAdminUser(u)} onDenied={() => setDenied(true)} />;
   // ── End auth check ────────────────────────────────────────────────────────
 
   const [sessions, setSessions]       = React.useState([]);
