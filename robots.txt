@@ -63,6 +63,8 @@ User-agent: *
 # --- Admin panel ---
 Disallow: /admin
 Disallow: /admin/
+Disallow: /chat-process
+Disallow: /chat-process/
 
 # --- Account & user pages ---
 Disallow: /account
