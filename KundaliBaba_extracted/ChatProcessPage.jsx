@@ -1,10 +1,129 @@
 // ============================================================
-// KundaliBaba — ChatProcessPage  (v=1)
+// KundaliBaba — ChatProcessPage  (v=2)
 // Admin dashboard for managing all live consultations
-// Route: /chat-process
+// Route: /chat-process  — locked to ADMIN_EMAIL only
 // ============================================================
 
-const ADMIN_API = (window.KBApi && window.KBApi.BASE) || 'https://kundalibaba-backend-production.up.railway.app/api/v1';
+const ADMIN_API   = (window.KBApi && window.KBApi.BASE) || 'https://kundalibaba-backend-production.up.railway.app/api/v1';
+const ADMIN_EMAIL = 'rishisinha727@gmail.com';
+
+// ── Auth Gate — shown if user is not logged in or not the admin ───────────────
+function AdminAuthGate({ onSuccess }) {
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError]     = React.useState('');
+  const [status, setStatus]   = React.useState('loading');
+  const containerRef          = React.useRef(null);
+
+  React.useEffect(() => {
+    // Reuse the same Google Client ID as the main site
+    const CLIENT_ID = '112774249048-rfnms6tnvqi4d6gcaureisbqfd2jb7de.apps.googleusercontent.com';
+
+    window.__adminGoogleCallback = async (response) => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await window.KBApi.googleLogin(response.credential);
+        const user = res.data.user;
+        if (user.email !== ADMIN_EMAIL) {
+          setError(`Access denied. This dashboard is restricted to ${ADMIN_EMAIL}.`);
+          setLoading(false);
+          return;
+        }
+        window.Auth.setToken(res.data.accessToken);
+        window.Auth.setRefresh(res.data.refreshToken);
+        window.Auth.setUser(user);
+        onSuccess(user);
+      } catch (e) {
+        setError(e.message || 'Sign-in failed. Please try again.');
+        setLoading(false);
+      }
+    };
+
+    let attempts = 0;
+    const tryRender = () => {
+      attempts++;
+      if (containerRef.current && window.google && window.google.accounts) {
+        try {
+          window.google.accounts.id.initialize({ client_id: CLIENT_ID, callback: window.__adminGoogleCallback });
+          window.google.accounts.id.renderButton(containerRef.current, {
+            theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 300,
+          });
+          setStatus('ready');
+        } catch {
+          setStatus('error');
+          setError('Google Sign-In failed to load. Please refresh.');
+        }
+      } else if (attempts < 40) {
+        setTimeout(tryRender, 250);
+      } else {
+        setStatus('error');
+        setError('Google Sign-In could not load. Please refresh the page.');
+      }
+    };
+    setTimeout(tryRender, 400);
+    return () => { delete window.__adminGoogleCallback; };
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0D1B3E 0%, #1a2d5a 100%)',
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 400,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.3)', textAlign: 'center',
+      }}>
+        {/* Logo */}
+        <div style={{ marginBottom: 8 }}>
+          <svg width="40" height="40" viewBox="0 0 64 64" fill="none" style={{ display: 'inline-block' }}>
+            <rect width="64" height="64" rx="12" fill="#0D1B3E"/>
+            <line x1="32" y1="13" x2="32" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="13" y1="32" x2="51" y2="32" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="32" y1="13" x2="51" y2="13" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="51" y1="32" x2="51" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="32" y1="51" x2="13" y2="51" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <line x1="13" y1="32" x2="13" y2="13" stroke="#FF6600" strokeWidth="11" strokeLinecap="square"/>
+            <circle cx="32" cy="32" r="4.5" fill="#FFB300"/>
+          </svg>
+        </div>
+
+        <h2 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 800, color: '#0D1B3E' }}>
+          Admin Dashboard
+        </h2>
+        <p style={{ margin: '0 0 28px', fontSize: 13, color: '#94a3b8' }}>
+          Restricted access · Sign in to continue
+        </p>
+
+        {loading && (
+          <div style={{ fontSize: 13, color: '#FF6600', marginBottom: 16 }}>Verifying…</div>
+        )}
+
+        {error && (
+          <div style={{
+            background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10,
+            padding: '12px 16px', fontSize: 13, color: '#dc2626', marginBottom: 16, lineHeight: 1.5,
+          }}>{error}</div>
+        )}
+
+        {/* Google button */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          {status === 'loading' && !loading && (
+            <div style={{
+              width: 300, height: 44, border: '1px solid #dadce0', borderRadius: 4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, color: '#94a3b8',
+            }}>Loading Google Sign-In…</div>
+          )}
+          <div ref={containerRef} />
+        </div>
+
+        <div style={{ fontSize: 11, color: '#cbd5e1' }}>
+          🔒 Only authorised personnel can access this page
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Socket (admin mode) ───────────────────────────────────────────────────────
 let _adminSocket = null;
@@ -111,6 +230,18 @@ function SessionCard({ session, isActive, onClick }) {
 
 // ── Main ChatProcessPage ──────────────────────────────────────────────────────
 function ChatProcessPage({ onNavigate }) {
+  // ── Auth check — must be logged in as ADMIN_EMAIL ─────────────────────────
+  const [adminUser, setAdminUser] = React.useState(() => {
+    const u = window.Auth && window.Auth.getUser ? window.Auth.getUser() : null;
+    return (u && u.email === ADMIN_EMAIL) ? u : null;
+  });
+
+  // If not authenticated as admin, show login gate
+  if (!adminUser) {
+    return <AdminAuthGate onSuccess={(u) => setAdminUser(u)} />;
+  }
+  // ── End auth check ────────────────────────────────────────────────────────
+
   const [sessions, setSessions]       = React.useState([]);
   const [activeId, setActiveId]       = React.useState(null);
   const [messages, setMessages]       = React.useState([]);
