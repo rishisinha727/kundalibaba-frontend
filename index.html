@@ -112,6 +112,8 @@
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Socket.io for real-time consultation chat -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin></script>
 
   <!-- API layer (plain JS, no Babel needed) -->
   <script src="KundaliBaba_extracted/api.js"></script>
@@ -196,7 +198,8 @@ Object.assign(window, { AuthModal });
   </script>
   <script type="text/babel" src="KundaliBaba_extracted/LandingPage.jsx?v=14"></script>
   <script type="text/babel" src="KundaliBaba_extracted/HomePage.jsx?v=12"></script>
-  <script type="text/babel" src="KundaliBaba_extracted/ChatPage.jsx?v=12"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/ChatPage.jsx?v=20"></script>
+  <script type="text/babel" src="KundaliBaba_extracted/ChatProcessPage.jsx?v=1"></script>
   <script type="text/babel" src="KundaliBaba_extracted/KundaliPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/ShopPage.jsx?v=12"></script>
   <script type="text/babel" src="KundaliBaba_extracted/HoroscopePage.jsx?v=14"></script>
@@ -208,12 +211,13 @@ Object.assign(window, { AuthModal });
     const TWEAK_DEFAULTS = { "heroSize": 54, "darkNav": false };
 
     const PAGE_TO_URL = {
-      home:     '/',
-      kundali:  '/free-kundali-online',
-      matching: '/kundali-matching-online',
-      chat:     '/chat-with-astrologer',
-      shop:     '/shop',
-      horoscope: '/horoscope',
+      home:         '/',
+      kundali:      '/free-kundali-online',
+      matching:     '/kundali-matching-online',
+      chat:         '/chat-with-astrologer',
+      shop:         '/shop',
+      horoscope:    '/horoscope',
+      'chat-process': '/chat-process',
     };
 
     const URL_TO_PAGE = {
@@ -223,6 +227,7 @@ Object.assign(window, { AuthModal });
       'chat-with-astrologer':    'chat',
       'shop':                    'shop',
       'horoscope':               'horoscope',
+      'chat-process':            'chat-process',
     };
 
     function getPageFromURL() {
@@ -346,13 +351,15 @@ Object.assign(window, { AuthModal });
         setUser(null);
       };
 
-      const isKundali   = page === 'kundali' || page === 'matching';
-      const hideFooter  = page === 'chat';
-      const isHoroscope = page.startsWith('horoscope');
-      const isCalc      = isCalcSlug(page);
-      const isBlog      = page === 'articles' || page.startsWith('articles/');
-      const isKnownPage = ['home','kundali','matching','chat','shop'].includes(page) || isHoroscope || isCalc || isBlog;
-      const isCustomPage = !isKnownPage && page !== 'home';
+      const isKundali     = page === 'kundali' || page === 'matching';
+      const isChatProcess = page === 'chat-process';
+      const hideFooter    = page === 'chat' || isChatProcess;
+      const hideNav       = isChatProcess;
+      const isHoroscope   = page.startsWith('horoscope');
+      const isCalc        = isCalcSlug(page);
+      const isBlog        = page === 'articles' || page.startsWith('articles/');
+      const isKnownPage   = ['home','kundali','matching','chat','shop','chat-process'].includes(page) || isHoroscope || isCalc || isBlog;
+      const isCustomPage  = !isKnownPage && page !== 'home';
 
       // Derive slider context from current page
       function sliderContext() {
@@ -365,23 +372,24 @@ Object.assign(window, { AuthModal });
       const sliderCtx = sliderContext();
 
       const pageSeo = seoMap[page] || {};
-      const showHeader = !!(pageSeo.headerContent) && page !== 'home';
+      const showHeader = !!(pageSeo.headerContent) && page !== 'home' && !isChatProcess;
       const showFooter = !!(pageSeo.footerHtml) && !hideFooter;
 
       return (
         <div>
-          <KBNav currentPage={page} onNavigate={onNavigate} tweaks={t} user={user} onSignIn={() => setShowAuth(true)} onLogout={handleLogout} />
+          {!hideNav && <KBNav currentPage={page} onNavigate={onNavigate} tweaks={t} user={user} onSignIn={() => setShowAuth(true)} onLogout={handleLogout} />}
 
-          {showHeader && <PageHeaderContent seo={pageSeo} />}
+          {showHeader && !isChatProcess && <PageHeaderContent seo={pageSeo} />}
 
-          {page === 'home'  && <LandingPage onNavigate={onNavigate} />}
-          {isKundali        && <KundaliPage onNavigate={onNavigate} tweaks={t} initialSubPage={page} key={page} onShowAuth={() => setShowAuth(true)} />}
-          {page === 'chat'  && <ChatPage    onNavigate={onNavigate} tweaks={t} user={user} onShowAuth={() => setShowAuth(true)} />}
-          {page === 'shop'  && <ShopPage    onNavigate={onNavigate} />}
-          {isHoroscope      && <HoroscopePage path={page} onNavigate={onNavigate} />}
-          {isCalc           && <CalculatorsPage path={page} onNavigate={onNavigate} />}
-          {isBlog           && <BlogPage path={page} onNavigate={onNavigate} />}
-          {isCustomPage     && <CustomPageView slug={page} onNavigate={onNavigate} />}
+          {page === 'home'          && <LandingPage onNavigate={onNavigate} />}
+          {isKundali                && <KundaliPage onNavigate={onNavigate} tweaks={t} initialSubPage={page} key={page} onShowAuth={() => setShowAuth(true)} />}
+          {page === 'chat'          && <ChatPage    onNavigate={onNavigate} tweaks={t} user={user} onShowAuth={() => setShowAuth(true)} />}
+          {isChatProcess            && typeof ChatProcessPage !== 'undefined' && <ChatProcessPage onNavigate={onNavigate} />}
+          {page === 'shop'          && <ShopPage    onNavigate={onNavigate} />}
+          {isHoroscope              && <HoroscopePage path={page} onNavigate={onNavigate} />}
+          {isCalc                   && <CalculatorsPage path={page} onNavigate={onNavigate} />}
+          {isBlog                   && <BlogPage path={page} onNavigate={onNavigate} />}
+          {isCustomPage             && <CustomPageView slug={page} onNavigate={onNavigate} />}
 
           {showFooter && <PageFooterContent seo={pageSeo} />}
           {!hideFooter && <KBFooter onNavigate={onNavigate} />}
